@@ -27,9 +27,11 @@ use webrtc::peer_connection::RTCPeerConnection;
 
 pub struct ConnexState {
     pub session: Mutex<Option<Session>>,
-    pub peer: Mutex<Option<Arc<RTCPeerConnection>>>,
+    pub host_peer: Mutex<Option<Arc<RTCPeerConnection>>>,
+    pub controller_peer: Mutex<Option<Arc<RTCPeerConnection>>>,
     pub frames_channel: Mutex<Option<Arc<RTCDataChannel>>>,
-    pub input_channel: Mutex<Option<Arc<RTCDataChannel>>>,
+    pub host_input_channel: Mutex<Option<Arc<RTCDataChannel>>>,
+    pub controller_input_channel: Arc<Mutex<Option<Arc<RTCDataChannel>>>>,
     pub stop_capture: Arc<AtomicBool>,
 }
 
@@ -37,9 +39,11 @@ impl ConnexState {
     pub fn new() -> Self {
         ConnexState {
             session: Mutex::new(None),
-            peer: Mutex::new(None),
+            host_peer: Mutex::new(None),
+            controller_peer: Mutex::new(None),
             frames_channel: Mutex::new(None),
-            input_channel: Mutex::new(None),
+            host_input_channel: Mutex::new(None),
+            controller_input_channel: Arc::new(Mutex::new(None)),
             stop_capture: Arc::new(AtomicBool::new(false)),
         }
     }
@@ -148,9 +152,9 @@ pub async fn host_create_session(
     let payload = encode_payload(&offer, cands).map_err(|e| e.to_string())?;
 
     // Store peer and data channels in ConnexState
-    *state.peer.lock().await = Some(peer);
+    *state.host_peer.lock().await = Some(peer);
     *state.frames_channel.lock().await = Some(frames_ch);
-    *state.input_channel.lock().await = Some(input_ch);
+    *state.host_input_channel.lock().await = Some(input_ch);
 
     info!("[cmd] host_create_session offer generated (len={})", payload.len());
     Ok(payload)
@@ -183,8 +187,7 @@ pub async fn controller_join_session(
     // On controller side, listen for data channels initiated by host
     {
         let app_clone = app.clone();
-        let input_ch_slot = Arc::new(Mutex::new(None));
-        let input_ch_slot_clone = Arc::clone(&input_ch_slot);
+        let ctrl_input_ch = Arc::clone(&state.controller_input_channel);
 
         peer.on_data_channel(Box::new(move |channel: Arc<RTCDataChannel>| {
             let label = channel.label().to_string();
@@ -206,7 +209,7 @@ pub async fn controller_join_session(
                     Box::pin(async {})
                 }));
             } else if label == crate::core::webrtc_peer::CHANNEL_INPUT {
-                let slot = Arc::clone(&input_ch_slot_clone);
+                let slot = Arc::clone(&ctrl_input_ch);
                 let ch = Arc::clone(&channel);
                 tokio::spawn(async move {
                     *slot.lock().await = Some(ch);
@@ -251,7 +254,7 @@ pub async fn controller_join_session(
         encode_payload_with_passcode(&answer, cands, passcode.trim().to_string())
             .map_err(|e| e.to_string())?;
 
-    *state.peer.lock().await = Some(peer);
+    *state.controller_peer.lock().await = Some(peer);
 
     info!("[cmd] controller_join_session answer generated");
     Ok(answer_payload)
@@ -274,10 +277,10 @@ pub async fn host_apply_answer(
         return Err("Wrong passcode — connection rejected.".into());
     }
 
-    let guard = state.peer.lock().await;
+    let guard = state.host_peer.lock().await;
     let peer = guard
         .as_ref()
-        .ok_or("No active session. Create a session first.")?;
+        .ok_or("No active host session. Create a session first.")?;
 
     apply_answer(peer, &signal.sdp)
         .await
@@ -337,11 +340,15 @@ pub async fn start_capture(app: AppHandle, state: State<'_, ConnexState>) -> Res
 #[tauri::command]
 pub async fn stop_capture(state: State<'_, ConnexState>) -> Result<(), String> {
     state.stop_capture.store(true, Ordering::Relaxed);
-    if let Some(peer) = state.peer.lock().await.take() {
+    if let Some(peer) = state.host_peer.lock().await.take() {
+        let _ = peer.close().await;
+    }
+    if let Some(peer) = state.controller_peer.lock().await.take() {
         let _ = peer.close().await;
     }
     *state.frames_channel.lock().await = None;
-    *state.input_channel.lock().await = None;
+    *state.host_input_channel.lock().await = None;
+    *state.controller_input_channel.lock().await = None;
     *state.session.lock().await = None;
     info!("[cmd] stop_capture & session reset");
     Ok(())
@@ -354,7 +361,7 @@ pub async fn inject_input(
     state: State<'_, ConnexState>,
 ) -> Result<(), String> {
     // If controller is connected via WebRTC input channel, send event to host
-    let ch = state.input_channel.lock().await.clone();
+    let ch = state.controller_input_channel.lock().await.clone();
     if let Some(ref input_ch) = ch {
         let _ = input_ch.send_text(event_json.clone()).await;
     }
