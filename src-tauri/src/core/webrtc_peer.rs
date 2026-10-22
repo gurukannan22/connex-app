@@ -21,11 +21,9 @@ use webrtc::peer_connection::configuration::RTCConfiguration;
 use webrtc::peer_connection::peer_connection_state::RTCPeerConnectionState;
 use webrtc::peer_connection::RTCPeerConnection;
 
-/// Google's free public STUN servers — no signup required
+/// Google's free public STUN server
 const STUN_SERVERS: &[&str] = &[
     "stun:stun.l.google.com:19302",
-    "stun:stun1.l.google.com:19302",
-    "stun:stun2.l.google.com:19302",
 ];
 
 /// Channel labels

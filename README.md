@@ -1,16 +1,21 @@
 # Connex — Remote Desktop App
 
-A lightweight, fast, and stealthy remote desktop application built with **Rust + Tauri**.  
+A lightweight, fast remote desktop application built with **Rust + Tauri**.  
 Works on **macOS Silicon (ARM)** and **Windows** natively.
+
+Connex is a **consent-based** remote desktop tool: the host machine runs it as a
+normal, visible app (it shows in the Dock/taskbar and in any screen share), and
+the host must explicitly accept each incoming connection.
 
 ## Key Features
 
 | Feature | Details |
 |---|---|
+| **Static Device ID** | Every machine has a fixed 6-digit ID + passcode for pairing |
+| **Host Accepts** | Nothing connects until the host approves and the passcode matches |
+| **Visible App** | Runs like any normal window — appears in screen shares |
 | **Remote Control** | Full mouse + keyboard injection on host machine |
-| **Screen Capture** | 30fps JPEG streaming via WebRTC DataChannel |
-| **Stealth Mode** | Host is invisible to Zoom, Google Meet, OBS, screenshot tools |
-| **No Dock/Taskbar** | Host process has zero visual presence on the OS |
+| **Screen Capture** | 30fps JPEG streaming |
 | **P2P WebRTC** | Direct connection using Google STUN servers — no relay server needed |
 | **Role System** | Same app; role (Host/Controller) determined at session time |
 | **Tiny Binary** | ~5MB release build (vs 60MB Flutter) |
@@ -22,8 +27,7 @@ Works on **macOS Silicon (ARM)** and **Windows** natively.
 - **Screen Capture**: `scrap` crate (DXGI on Windows, CGDisplayStream on macOS)
 - **Input Injection**: `enigo` crate (CGEvent on macOS, SendInput on Windows)
 - **WebRTC**: `webrtc-rs` with Google STUN
-- **Stealth (macOS)**: `NSWindowSharingNone` + `NSApplicationActivationPolicyProhibited`
-- **Stealth (Windows)**: `SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)` + `WS_EX_TOOLWINDOW`
+- **Identity**: static 6-digit device ID (derived from the machine) + passcode, persisted in the app config dir
 
 ## Project Structure
 
@@ -37,9 +41,9 @@ connex-app/
 │   │   ├── core/
 │   │   │   ├── capture.rs      # Screen capture → JPEG frames
 │   │   │   ├── input.rs        # Mouse/keyboard injection
+│   │   │   ├── identity.rs     # Static 6-digit device ID + passcode
 │   │   │   ├── session.rs      # Role & session management
 │   │   │   ├── signaling.rs    # Serverless SDP signaling (base64)
-│   │   │   ├── stealth.rs      # OS stealth APIs (macOS + Windows)
 │   │   │   └── webrtc_peer.rs  # WebRTC peer connection
 │   │   ├── ipc/
 │   │   │   └── commands.rs     # Tauri commands exposed to frontend
@@ -75,30 +79,43 @@ Outputs:
 - `src-tauri/target/release/bundle/macos/Connex.app`
 - `src-tauri/target/release/bundle/windows/Connex_installer.exe`
 
-## How Connection Works (No Server!)
+## How Connection Works
+
+Each machine has a **static 6-digit device ID** and a **passcode** (shown on the
+home screen). The controller enters both, and the host must accept:
 
 ```
-HOST (person sharing screen)          CONTROLLER (person viewing)
-─────────────────────────────         ────────────────────────────
-1. Generates SDP offer                
-2. Encodes as base64 payload          
-3. User copies & sends via chat  →    4. Pastes payload
-                                       5. Generates SDP answer
-                                  ←    6. User copies & sends back
-7. Pastes answer, connection          
-   completes via STUN P2P             7. Receives screen frames
+HOST (shares screen)                  CONTROLLER (views & controls)
+─────────────────────────────        ────────────────────────────
+0. Shows device ID + passcode    →    0. Learns ID + passcode (out of band)
+1. Generates SDP offer payload   →    2. Enters ID + passcode, pastes payload
+                                      3. Generates SDP answer (carries passcode)
+4. Pastes answer                 ←    3. Sends answer back
+5. Verifies passcode & ACCEPTS        5. Connection completes via STUN P2P
+   → nothing starts until step 5
 ```
 
-## Stealth Details
+> **Note:** connecting by typing the ID + passcode *alone* (no payload
+> copy/paste) requires a small signaling server to look up which machine owns an
+> ID. That server is not included yet — see "Roadmap" below. Today the SDP
+> payload is still exchanged out of band, with the ID + passcode acting as the
+> pairing/authorization check.
 
-### macOS
-- `NSApplicationActivationPolicyProhibited` — no Dock icon, no menu bar
-- `[NSWindow setSharingType: NSWindowSharingNone]` — excluded from all screen capture APIs
+## Consent & Visibility
 
-### Windows  
-- `SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE)` — invisible to capture tools
-- `SetWindowLong(GWL_EXSTYLE, WS_EX_TOOLWINDOW)` — hidden from taskbar & Alt+Tab
-- `windows_subsystem = "windows"` — no console window
+Connex deliberately runs as a **normal, visible application**:
+
+- It appears in the macOS Dock / Windows taskbar.
+- It is **not** excluded from screen capture — if the host shares their screen
+  on a call, Connex shows up like any other window.
+- The host must **explicitly accept** every incoming connection, and the
+  controller's passcode is verified before anything starts.
+
+## Roadmap
+
+- **Signaling server** — connect by ID + passcode only, no payload copy/paste.
+- **WebRTC data-channel frame transport** — stream frames peer-to-peer (today
+  capture is wired to a local event path).
 
 ## License
 MIT

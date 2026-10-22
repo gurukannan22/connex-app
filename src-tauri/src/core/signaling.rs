@@ -26,15 +26,29 @@ use webrtc::peer_connection::RTCPeerConnection;
 /// Wrapper for exchanging signaling data as compact base64
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SignalPayload {
-    pub sdp: String,            // SDP offer or answer
+    pub sdp: String,             // SDP offer or answer
     pub candidates: Vec<String>, // serialized ICE candidates
+    /// Passcode the controller entered (present on the controller's answer
+    /// so the host can verify it before accepting). Empty on the host offer.
+    #[serde(default)]
+    pub passcode: String,
 }
 
 /// Serialize an SDP to a compact base64 string for display to user
 pub fn encode_payload(sdp: &RTCSessionDescription, candidates: Vec<String>) -> Result<String> {
+    encode_payload_with_passcode(sdp, candidates, String::new())
+}
+
+/// Serialize an SDP + passcode to a compact base64 string
+pub fn encode_payload_with_passcode(
+    sdp: &RTCSessionDescription,
+    candidates: Vec<String>,
+    passcode: String,
+) -> Result<String> {
     let payload = SignalPayload {
         sdp: sdp.sdp.clone(),
         candidates,
+        passcode,
     };
     let json = serde_json::to_string(&payload)?;
     Ok(B64.encode(json.as_bytes()))
