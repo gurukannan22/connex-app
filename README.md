@@ -118,5 +118,20 @@ GitHub Actions will:
 
 ---
 
+## macOS Gatekeeper Troubleshooting ("App is damaged / Move to Bin")
+
+Because Connex is an open-source tool distributed outside the Mac App Store without a paid Apple Developer ID certificate ($99/year), macOS Gatekeeper flags downloaded binaries with a quarantine attribute.
+
+If macOS displays:
+> *"Connex is damaged and can't be opened. You should move it to the Bin / Trash."*
+
+Run this one-time command in your macOS **Terminal**:
+```bash
+xattr -cr /Applications/Connex.app
+```
+Then launch Connex normally from your Applications folder or Spotlight.
+
+---
+
 ## License
 MIT License. Built for confidential remote assistance and diagnostics.
