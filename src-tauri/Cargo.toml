@@ -1,0 +1,83 @@
+[package]
+name = "connex"
+version = "0.1.0"
+description = "Connex - Remote Desktop App"
+authors = ["Connex"]
+edition = "2021"
+
+[lib]
+name = "connex_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Logging
+log = "0.4"
+env_logger = "0.11"
+
+# Screen capture (cross-platform)
+scrap = "0.5"
+
+# Input injection (cross-platform mouse + keyboard)
+enigo = { version = "0.2", features = [] }
+
+# Networking / WebRTC signaling over WebSocket
+tokio-tungstenite = { version = "0.24", features = ["native-tls"] }
+futures-util = "0.3"
+url = "2"
+
+# WebRTC
+webrtc = "0.12"
+
+# Unique session IDs
+uuid = { version = "1", features = ["v4"] }
+
+# Image encoding for screen frames
+image = "0.25"
+
+# Random code generation
+rand = "0.8"
+
+# Error handling
+anyhow = "1"
+thiserror = "1"
+
+# Channel for async communication
+tokio-stream = "0.1"
+
+# Base64 for frame encoding
+base64 = "0.22"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# macOS stealth via Objective-C runtime
+objc2 = "0.5"
+objc2-app-kit = { version = "0.2", features = ["NSWindow", "NSApplication"] }
+core-foundation = "0.9"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+# Windows stealth via Win32
+windows = { version = "0.58", features = [
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_Foundation",
+  "Win32_System_Threading",
+  "Win32_UI_Input_KeyboardAndMouse",
+] }
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = 3
+strip = true

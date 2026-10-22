@@ -1,0 +1,20 @@
+# Rust / Cargo
+src-tauri/target/
+src-tauri/.cargo-lock
+
+# Node / npm
+node_modules/
+dist/
+.vite/
+
+# Tauri
+src-tauri/gen/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
