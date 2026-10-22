@@ -88,7 +88,7 @@ mod windows {
     pub fn apply() -> Result<()> {
         unsafe {
             let hwnd: HWND = GetForegroundWindow();
-            if hwnd.0 != 0 {
+            if !hwnd.0.is_null() {
                 // WDA_EXCLUDEFROMCAPTURE = 0x00000011
                 let _ = SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE);
                 info!("[stealth:windows] WDA_EXCLUDEFROMCAPTURE set on active window");
