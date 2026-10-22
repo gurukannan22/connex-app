@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connex — Invisible Remote Desktop for macOS & Windows</title>
+  <meta name="description" content="Connex is a fast, lightweight remote desktop application for macOS and Windows. Features complete invisibility during Zoom, Google Meet, and screen sharing calls." />
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Ambient background glow -->
+  <div class="glow-bg top-glow"></div>
+  <div class="glow-bg right-glow"></div>
+
+  <!-- Header -->
+  <header class="navbar">
+    <div class="container nav-content">
+      <a href="#" class="brand">
+        <img src="assets/logo.png" alt="Connex Logo" class="brand-logo" />
+        <span class="brand-text">Connex</span>
+      </a>
+
+      <nav class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#invisibility">Invisibility</a>
+        <a href="#comparison">Compare</a>
+        <a href="#downloads">Downloads</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="https://github.com/gurukannan22/connex-app" target="_blank" rel="noopener noreferrer" class="btn btn-ghost github-btn">
+          <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          <span>GitHub</span>
+        </a>
+        <a href="#downloads" class="btn btn-primary nav-download-btn">Download Free</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="container hero-container">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        <span>Connex v0.1.0 • macOS Silicon & Windows</span>
+      </div>
+
+      <h1 class="hero-title">
+        Remote Desktop That Stays<br />
+        <span class="gradient-text">Invisible on Meeting Calls</span>
+      </h1>
+
+      <p class="hero-subtitle">
+        Ultra-fast P2P remote desktop like UltraViewer — with native OS window capture exclusion.
+        While you share your screen on Google Meet, Zoom, or Teams, Connex is completely invisible to meeting viewers.
+      </p>
+
+      <!-- Primary Download CTA with OS Detection -->
+      <div class="hero-cta">
+        <div id="detected-download" class="primary-download-wrap">
+          <a id="btn-primary-dl" href="#downloads" class="btn btn-cta">
+            <svg id="os-icon" class="icon icon-lg" viewBox="0 0 24 24" fill="currentColor">
+              <!-- Dynamically populated or default download icon -->
+              <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+            </svg>
+            <div class="cta-text">
+              <span id="cta-label" class="cta-title">Download for macOS</span>
+              <span id="cta-sub" class="cta-subtitle">Apple Silicon • .dmg</span>
+            </div>
+          </a>
+        </div>
+
+        <a href="#downloads" class="btn btn-secondary-cta">
+          <span>All Platforms</span>
+          <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 9l-7 7-7-7"/>
+          </svg>
+        </a>
+      </div>
+
+      <div class="hero-specs">
+        <span>⚡ Rust & WebRTC</span>
+        <span class="dot">•</span>
+        <span>🛡️ E2E Encrypted</span>
+        <span class="dot">•</span>
+        <span>🪟 Stealth Capture Exclusion</span>
+        <span class="dot">•</span>
+        <span>🆓 100% Free & Open Source</span>
+      </div>
+
+      <!-- App Interface Preview Mockup -->
+      <div class="hero-mockup">
+        <div class="mockup-window">
+          <div class="mockup-titlebar">
+            <div class="window-controls">
+              <span class="ctrl close"></span>
+              <span class="ctrl min"></span>
+              <span class="ctrl max"></span>
+            </div>
+            <div class="mockup-title">Connex — Remote Access</div>
+            <div class="mockup-status">
+              <span class="status-indicator"></span> Stealth Active
+            </div>
+          </div>
+          <div class="mockup-body">
+            <div class="mockup-grid">
+              <!-- This Computer Card -->
+              <div class="mockup-card">
+                <div class="card-head">
+                  <div class="card-icon">🖥️</div>
+                  <div>
+                    <h3>This Computer</h3>
+                    <p>Share your screen</p>
+                  </div>
+                </div>
+                <div class="mockup-field">
+                  <span class="field-label">Your ID</span>
+                  <div class="id-box">849 203</div>
+                </div>
+                <div class="mockup-field">
+                  <span class="field-label">Passcode</span>
+                  <div class="code-box">491 820</div>
+                </div>
+                <button class="mockup-btn active-btn">● Sharing Active (Protected)</button>
+              </div>
+
+              <!-- Remote Partner Card -->
+              <div class="mockup-card">
+                <div class="card-head">
+                  <div class="card-icon">🎮</div>
+                  <div>
+                    <h3>Control Remote</h3>
+                    <p>Connect to partner</p>
+                  </div>
+                </div>
+                <div class="mockup-field">
+                  <span class="field-label">Partner ID</span>
+                  <div class="input-placeholder">Enter 6-digit ID</div>
+                </div>
+                <div class="mockup-field">
+                  <span class="field-label">Partner Passcode</span>
+                  <div class="input-placeholder">Enter passcode</div>
+                </div>
+                <button class="mockup-btn primary-btn">Connect to Partner →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Invisibility Feature Spotlight -->
+  <section id="invisibility" class="spotlight-section">
+    <div class="container">
+      <div class="spotlight-badge">Engineered for Privacy</div>
+      <h2 class="section-title">How Meeting Invisibility Works</h2>
+      <p class="section-subtitle">
+        Connex leverages native operating system compositor APIs to cleanly exclude its window from all desktop video capture pipelines.
+      </p>
+
+      <div class="spotlight-grid">
+        <div class="spotlight-card">
+          <div class="spotlight-os">
+            <span class="os-tag mac">macOS</span>
+            <code>NSWindowSharingNone</code>
+          </div>
+          <h3>Native Quartz Compositor Exclusion</h3>
+          <p>
+            On macOS Silicon & Intel, Connex sets <code>setSharingType: NSWindowSharingNone</code> directly on the <code>NSWindow</code>.
+            The window remains visible and interactive for you on your physical screen, but CoreGraphics and ScreenCaptureKit completely bypass it.
+            Google Meet, Zoom, Microsoft Teams, Slack, and OBS see only whatever is behind the window.
+          </p>
+        </div>
+
+        <div class="spotlight-card">
+          <div class="spotlight-os">
+            <span class="os-tag win">Windows</span>
+            <code>WDA_EXCLUDEFROMCAPTURE</code>
+          </div>
+          <h3>Desktop Window Manager (DWM) Exclusion</h3>
+          <p>
+            On Windows 10 and 11, Connex applies <code>SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE)</code> (0x00000011).
+            DWM instructs the compositor to omit the application from all screen capture surfaces. Meeting software captures transparent or background desktop pixels instead.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Features -->
+  <section id="features" class="features-section">
+    <div class="container">
+      <div class="spotlight-badge">Key Capabilities</div>
+      <h2 class="section-title">UltraViewer Simplicity, Built for 2026</h2>
+      <p class="section-subtitle">Zero bloat, zero account signups, zero server relay lag.</p>
+
+      <div class="features-grid">
+        <div class="feature-box">
+          <div class="feature-icon">⚡</div>
+          <h3>Ultra-Fast WebRTC P2P</h3>
+          <p>High frame-rate 30 FPS display streaming directly between peers with minimal latency and high compression JPEG encoding.</p>
+        </div>
+
+        <div class="feature-box">
+          <div class="feature-icon">🛡️</div>
+          <h3>End-to-End Encrypted</h3>
+          <p>All screen frames and remote control inputs are encrypted with DTLS-SRTP. No central servers store or inspect your session.</p>
+        </div>
+
+        <div class="feature-box">
+          <div class="feature-icon">🎯</div>
+          <h3>Responsive Remote Control</h3>
+          <p>Low latency mouse pointer synchronization, left/right/middle click support, scroll wheel, and full keyboard event injection.</p>
+        </div>
+
+        <div class="feature-box">
+          <div class="feature-icon">🔑</div>
+          <h3>Instant Numeric ID & Passcode</h3>
+          <p>Every device has a static 6-digit ID and rotatable passcode. No complicated setup, email verification, or registration needed.</p>
+        </div>
+
+        <div class="feature-box">
+          <div class="feature-icon">🪶</div>
+          <h3>Under 25 MB Memory</h3>
+          <p>Built with Rust and Tauri 2 instead of heavy Electron wrappers. Consumes 90% less RAM and launches in milliseconds.</p>
+        </div>
+
+        <div class="feature-box">
+          <div class="feature-icon">💻</div>
+          <h3>Apple Silicon & Windows</h3>
+          <p>Native ARM64 binaries for M1/M2/M3/M4 Macs, Universal macOS binaries, and 64-bit Windows executables.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison Section -->
+  <section id="comparison" class="comparison-section">
+    <div class="container">
+      <div class="spotlight-badge">Comparison</div>
+      <h2 class="section-title">Connex vs. Traditional Remote Apps</h2>
+      <p class="section-subtitle">See why Connex is the preferred tool for confidential remote assistance.</p>
+
+      <div class="table-wrap">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th class="highlight-col">Connex</th>
+              <th>UltraViewer</th>
+              <th>TeamViewer</th>
+              <th>AnyDesk</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Screen-Share Invisibility</strong> (Zoom/Meet)</td>
+              <td class="highlight-col text-success">✓ Native OS Protected</td>
+              <td class="text-danger">✗ Visible to viewers</td>
+              <td class="text-danger">✗ Visible to viewers</td>
+              <td class="text-danger">✗ Visible to viewers</td>
+            </tr>
+            <tr>
+              <td><strong>macOS Apple Silicon & Windows</strong></td>
+              <td class="highlight-col text-success">✓ Native Rust Binaries</td>
+              <td class="text-warning">Windows Only</td>
+              <td class="text-success">✓ Both</td>
+              <td class="text-success">✓ Both</td>
+            </tr>
+            <tr>
+              <td><strong>No Account / Login Required</strong></td>
+              <td class="highlight-col text-success">✓ Instant 6-digit ID</td>
+              <td class="text-success">✓ Yes</td>
+              <td class="text-danger">✗ Account enforced</td>
+              <td class="text-warning">⚠ Limited</td>
+            </tr>
+            <tr>
+              <td><strong>P2P Direct Streaming</strong></td>
+              <td class="highlight-col text-success">✓ Pure P2P WebRTC</td>
+              <td class="text-warning">Server Relay</td>
+              <td class="text-warning">Proprietary Relay</td>
+              <td class="text-warning">Proprietary Relay</td>
+            </tr>
+            <tr>
+              <td><strong>Memory Footprint</strong></td>
+              <td class="highlight-col text-success">&lt; 25 MB</td>
+              <td>~60 MB</td>
+              <td>~180 MB</td>
+              <td>~90 MB</td>
+            </tr>
+            <tr>
+              <td><strong>Free & Open Source</strong></td>
+              <td class="highlight-col text-success">✓ 100% Free & Open</td>
+              <td class="text-warning">Freemium</td>
+              <td class="text-danger">Expensive Commercial</td>
+              <td class="text-danger">Paid Licenses</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Downloads Section -->
+  <section id="downloads" class="downloads-section">
+    <div class="container">
+      <div class="spotlight-badge">Get Started</div>
+      <h2 class="section-title">Download Connex for Your Device</h2>
+      <p class="section-subtitle">
+        Latest official release binaries built by GitHub Actions. Free, verified, and ready to install.
+      </p>
+
+      <div class="download-cards-grid">
+        <!-- macOS Apple Silicon -->
+        <div class="dl-card featured">
+          <div class="dl-card-badge">Apple Silicon (M1/M2/M3/M4)</div>
+          <div class="dl-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-xl">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 1.01-2.87-.96.04-2.1.65-2.77 1.44-.59.69-.99 1.74-.94 2.8.06.01.12.02.19.02.94 0 1.9-.64 2.51-1.39z"/>
+            </svg>
+          </div>
+          <h3>macOS Silicon</h3>
+          <p class="dl-sub">macOS 11+ • Apple Silicon</p>
+          <div class="file-type">.DMG Package</div>
+          <a id="link-mac-arm" href="https://github.com/gurukannan22/connex-app/releases/latest" class="btn btn-primary btn-block">
+            Download .dmg
+          </a>
+          <span class="dl-checksum">Verified SHA-256 Release</span>
+        </div>
+
+        <!-- macOS Intel -->
+        <div class="dl-card">
+          <div class="dl-card-badge">Intel x86_64</div>
+          <div class="dl-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-xl">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 1.01-2.87-.96.04-2.1.65-2.77 1.44-.59.69-.99 1.74-.94 2.8.06.01.12.02.19.02.94 0 1.9-.64 2.51-1.39z"/>
+            </svg>
+          </div>
+          <h3>macOS Intel</h3>
+          <p class="dl-sub">macOS 10.15+ • Intel Macs</p>
+          <div class="file-type">.DMG Package</div>
+          <a id="link-mac-intel" href="https://github.com/gurukannan22/connex-app/releases/latest" class="btn btn-ghost btn-block">
+            Download .dmg
+          </a>
+          <span class="dl-checksum">Verified SHA-256 Release</span>
+        </div>
+
+        <!-- Windows Setup -->
+        <div class="dl-card featured">
+          <div class="dl-card-badge">Windows 10 / 11</div>
+          <div class="dl-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-xl">
+              <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
+            </svg>
+          </div>
+          <h3>Windows Installer</h3>
+          <p class="dl-sub">Windows 10 & 11 (64-bit)</p>
+          <div class="file-type">.EXE Installer</div>
+          <a id="link-win-exe" href="https://github.com/gurukannan22/connex-app/releases/latest" class="btn btn-primary btn-block">
+            Download .exe
+          </a>
+          <span class="dl-checksum">Verified SHA-256 Release</span>
+        </div>
+
+        <!-- Windows MSI / Portable -->
+        <div class="dl-card">
+          <div class="dl-card-badge">Enterprise Package</div>
+          <div class="dl-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="icon icon-xl">
+              <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
+            </svg>
+          </div>
+          <h3>Windows MSI</h3>
+          <p class="dl-sub">Windows Active Directory / Intune</p>
+          <div class="file-type">.MSI Package</div>
+          <a id="link-win-msi" href="https://github.com/gurukannan22/connex-app/releases/latest" class="btn btn-ghost btn-block">
+            Download .msi
+          </a>
+          <span class="dl-checksum">Verified SHA-256 Release</span>
+        </div>
+      </div>
+
+      <!-- Live Release Metadata Info Box -->
+      <div class="release-info-box">
+        <div class="rel-status">
+          <span class="dot-live"></span>
+          <span id="rel-tag">Release v0.1.0</span>
+        </div>
+        <div id="rel-published" class="rel-time">Published on GitHub</div>
+        <a id="rel-link" href="https://github.com/gurukannan22/connex-app/releases" target="_blank" class="rel-link">
+          View full release notes & source code →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <div class="footer-brand">
+        <img src="assets/logo.png" alt="Connex Logo" class="brand-logo" />
+        <span class="brand-text">Connex</span>
+        <p class="footer-desc">
+          Stealth, lightweight, peer-to-peer remote desktop utility for macOS and Windows.
+        </p>
+      </div>
+
+      <div class="footer-links">
+        <div class="link-group">
+          <h4>Navigation</h4>
+          <a href="#features">Features</a>
+          <a href="#invisibility">Invisibility</a>
+          <a href="#comparison">Compare</a>
+          <a href="#downloads">Downloads</a>
+        </div>
+        <div class="link-group">
+          <h4>Project</h4>
+          <a href="https://github.com/gurukannan22/connex-app" target="_blank">GitHub Repository</a>
+          <a href="https://github.com/gurukannan22/connex-app/releases" target="_blank">Releases</a>
+          <a href="https://github.com/gurukannan22/connex-app/issues" target="_blank">Issue Tracker</a>
+          <a href="https://github.com/gurukannan22/connex-app/blob/main/README.md" target="_blank">Documentation</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="container footer-bottom">
+      <p>© 2026 Connex Contributors. Built with Rust, Tauri, and WebRTC. Open source under MIT License.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

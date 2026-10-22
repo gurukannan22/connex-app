@@ -1,0 +1,126 @@
+name: Release & GitHub Pages
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Publish as official GitHub Release'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'release-and-pages'
+  cancel-in-progress: false
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # 1. Build macOS (.dmg) and Windows (.exe, .msi) Binaries
+  # ─────────────────────────────────────────────────────────────
+  build-tauri:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            args: '--target aarch64-apple-darwin'
+            arch: 'aarch64'
+          - platform: 'windows-latest'
+            args: '--target x86_64-pc-windows-msvc'
+            arch: 'x64'
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || 'x86_64-pc-windows-msvc' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build Tauri Desktop Application
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Connex ${{ github.ref_name }}'
+          releaseBody: |
+            ### Connex Release ${{ github.ref_name }}
+            
+            #### Downloads
+            - **macOS (Apple Silicon)**: `Connex_${{ github.ref_name }}_aarch64.dmg`
+            - **Windows (64-bit)**: `Connex_${{ github.ref_name }}_x64-setup.exe` (or `.msi`)
+            
+            #### Features
+            - **Native Screen-Sharing Invisibility**: Excluded from Zoom, Google Meet, Teams, and OBS.
+            - **Direct WebRTC P2P**: Ultra-low latency 30 FPS display streaming.
+            - **Full Remote Input**: Mouse and keyboard injection.
+            - **End-to-End Encrypted**: P2P DTLS-SRTP encryption.
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
+
+      # Save artifacts for manual download or workflow summary
+      - name: Upload bundle artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: connex-binaries-${{ matrix.platform }}
+          path: |
+            src-tauri/target/**/bundle/dmg/*.dmg
+            src-tauri/target/**/bundle/nsis/*.exe
+            src-tauri/target/**/bundle/msi/*.msi
+          if-no-files-found: warn
+
+  # ─────────────────────────────────────────────────────────────
+  # 2. Deploy Landing Page to GitHub Pages
+  # ─────────────────────────────────────────────────────────────
+  deploy-pages:
+    needs: [build-tauri]
+    if: always()
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'website'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
