@@ -332,7 +332,7 @@ function buildAppHTML() {
   <div class="app-shell">
     <header class="topbar">
       <div class="brand">
-        <span class="brand-mark">${icon("brand")}</span>
+        <img src="/connex-logo.png" class="brand-app-icon" alt="Connex" />
         <span class="brand-name">Connex</span>
       </div>
       <span class="top-status" id="global-status"><span class="dot"></span>Ready</span>

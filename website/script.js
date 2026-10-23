@@ -18,8 +18,32 @@ const FALLBACK_DOWNLOADS = {
 
 document.addEventListener("DOMContentLoaded", () => {
   setupOSDetection();
+  setupMockupTabs();
   fetchLatestRelease();
 });
+
+function setupMockupTabs() {
+  const tabHome = document.getElementById("tab-home");
+  const tabSession = document.getElementById("tab-session");
+  const viewHome = document.getElementById("view-home");
+  const viewSession = document.getElementById("view-session");
+
+  if (!tabHome || !tabSession) return;
+
+  tabHome.addEventListener("click", () => {
+    tabHome.classList.add("active");
+    tabSession.classList.remove("active");
+    viewHome.classList.add("active");
+    viewSession.classList.remove("active");
+  });
+
+  tabSession.addEventListener("click", () => {
+    tabSession.classList.add("active");
+    tabHome.classList.remove("active");
+    viewSession.classList.add("active");
+    viewHome.classList.remove("active");
+  });
+}
 
 // ─────────────────────────────────────────────────────────────
 // OS Detection

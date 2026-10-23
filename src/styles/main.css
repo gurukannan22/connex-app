@@ -100,6 +100,7 @@ svg { display: block; }
   background: var(--surface);
 }
 .brand { display: flex; align-items: center; gap: 9px; }
+.brand-app-icon { width: 24px; height: 24px; border-radius: 6px; object-fit: contain; }
 .brand-mark { width: 26px; height: 26px; border-radius: 7px; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; }
 .brand-mark .icon { width: 17px; height: 17px; stroke-width: 2.3; }
 .brand-name { font-weight: 600; font-size: 0.95rem; letter-spacing: -0.02em; }

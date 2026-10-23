@@ -3,15 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Connex — Fast, Private Remote Desktop for macOS & Windows</title>
-  <meta name="description" content="Connex is a fast, lightweight remote desktop app for macOS and Windows. Direct peer-to-peer streaming with built-in privacy during meeting screen shares." />
+  <title>Connex — Ultra-Fast, Private Remote Desktop</title>
+  <meta name="description" content="Connex is a fast, lightweight remote desktop application for macOS and Windows. Direct encrypted peer-to-peer streaming with built-in privacy during meeting screen shares." />
   <link rel="icon" type="image/png" href="assets/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+
+  <!-- Background decorative grid -->
+  <div class="bg-grid-pattern"></div>
+  <div class="bg-ambient-glow"></div>
 
   <!-- Navigation -->
   <header class="navbar">
@@ -34,7 +38,7 @@
           </svg>
           <span>GitHub</span>
         </a>
-        <a href="#downloads" class="btn btn-primary">Get Connex</a>
+        <a href="#downloads" class="btn btn-primary">Download Free</a>
       </div>
     </div>
   </header>
@@ -43,196 +47,296 @@
   <section class="hero-section">
     <div class="container hero-container">
       
-      <div class="badge-pill">
-        <span class="badge-dot"></span>
-        <span>Version 0.1.0 • macOS & Windows</span>
+      <div class="hero-pill">
+        <span class="pill-badge">v0.1.0</span>
+        <span class="pill-text">Native for macOS Apple Silicon & Windows 64-bit</span>
       </div>
 
       <h1 class="hero-title">
-        Fast, Private Remote Desktop
+        The Lightweight, Private<br />
+        <span class="gradient-text">Remote Desktop App</span>
       </h1>
 
       <p class="hero-subtitle">
-        A lightweight peer-to-peer desktop assistant. Connect instantly using a 6-digit ID with direct encrypted streaming and share-safe window privacy during meeting calls.
+        Direct peer-to-peer screen streaming and mouse/keyboard control. Zero account signups, instant 6-digit numeric access, and built-in window privacy during meeting calls.
       </p>
 
       <!-- Primary Action CTA -->
       <div class="hero-cta-group">
-        <a id="btn-primary-dl" href="#downloads" class="btn btn-download">
-          <svg id="os-icon" class="icon-download" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+        <a id="btn-primary-dl" href="#downloads" class="btn btn-download-hero">
+          <svg id="os-icon" class="icon-hero-os" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 1.01-2.87-.96.04-2.1.65-2.77 1.44-.59.69-.99 1.74-.94 2.8.06.01.12.02.19.02.94 0 1.9-.64 2.51-1.39z"/>
           </svg>
-          <div class="download-text">
-            <span id="cta-label" class="download-title">Download for macOS</span>
-            <span id="cta-sub" class="download-subtitle">Apple Silicon • .dmg</span>
+          <div class="hero-dl-content">
+            <span id="cta-label" class="dl-heading">Download for macOS</span>
+            <span id="cta-sub" class="dl-caption">Apple Silicon • .dmg</span>
           </div>
         </a>
 
-        <a href="#downloads" class="btn btn-outline">
-          All Downloads
+        <a href="#downloads" class="btn btn-secondary-hero">
+          All Platforms
+          <svg class="icon-inline" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
         </a>
       </div>
 
-      <div class="hero-specs-row">
-        <span class="spec-item">
-          <svg class="spec-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>
-          No account required
+      <div class="hero-highlights">
+        <span class="highlight-chip">
+          <svg class="chip-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>
+          No account or login required
         </span>
-        <span class="spec-divider">•</span>
-        <span class="spec-item">
-          <svg class="spec-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>
-          End-to-end encrypted
+        <span class="highlight-sep">•</span>
+        <span class="highlight-chip">
+          <svg class="chip-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>
+          Encrypted WebRTC P2P
         </span>
-        <span class="spec-divider">•</span>
-        <span class="spec-item">
-          <svg class="spec-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>
-          Under 30 MB memory
+        <span class="highlight-sep">•</span>
+        <span class="highlight-chip">
+          <svg class="chip-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>
+          Under 30 MB memory footprint
         </span>
       </div>
 
-      <!-- App Interface Preview -->
+      <!-- App Interface Interactive Preview -->
       <div id="preview" class="preview-wrapper">
-        <div class="window-frame">
-          <div class="window-titlebar">
-            <div class="window-buttons">
-              <span class="btn-dot dot-close"></span>
-              <span class="btn-dot dot-min"></span>
-              <span class="btn-dot dot-max"></span>
+        <div class="mockup-frame">
+          <!-- Window Header -->
+          <div class="mockup-chrome">
+            <div class="window-controls">
+              <span class="traffic-light red"></span>
+              <span class="traffic-light yellow"></span>
+              <span class="traffic-light green"></span>
             </div>
-            <div class="window-title">Connex</div>
-            <div class="window-badge">
-              <span class="status-light"></span> Ready
+            
+            <div class="chrome-brand">
+              <img src="assets/logo.png" alt="Connex" class="chrome-icon" />
+              <span class="chrome-title">Connex</span>
+            </div>
+
+            <div class="chrome-tabs">
+              <button id="tab-home" class="chrome-tab active" type="button">Connection Setup</button>
+              <button id="tab-session" class="chrome-tab" type="button">Active Session View</button>
+            </div>
+
+            <div class="chrome-status">
+              <span class="indicator-dot"></span>
+              <span class="indicator-text">Ready</span>
             </div>
           </div>
 
-          <div class="window-content">
-            <div class="panel-columns">
-              <!-- Left: Allow Remote Control -->
-              <div class="app-panel">
-                <div class="panel-header">
-                  <span class="panel-tag">Host</span>
-                  <h3 class="panel-title">Allow Remote Control</h3>
-                  <p class="panel-desc">Share these credentials to allow remote assistance.</p>
+          <!-- View 1: Main Credentials Setup View -->
+          <div id="view-home" class="mockup-body active">
+            <div class="app-layout">
+              <!-- Left Column: This Computer (Host) -->
+              <div class="panel-box">
+                <div class="panel-top">
+                  <div class="panel-badge-row">
+                    <span class="mode-tag host">Host Mode</span>
+                    <span class="privacy-status-pill">
+                      <span class="mini-shield"></span> Share-Safe
+                    </span>
+                  </div>
+                  <h3 class="panel-heading">Allow Remote Control</h3>
+                  <p class="panel-description">Give your 6-digit ID and passcode to your trusted partner.</p>
                 </div>
 
-                <div class="field-group">
-                  <label class="field-label">Your ID</label>
-                  <div class="credential-box">
-                    <span class="numeric-val">592 104</span>
-                    <button class="copy-tag" type="button" aria-label="Copy ID">Copy</button>
+                <div class="credential-field">
+                  <span class="cred-label">Your Device ID</span>
+                  <div class="cred-display">
+                    <span class="code-text">592 104</span>
+                    <button class="cred-btn" type="button">Copy ID</button>
                   </div>
                 </div>
 
-                <div class="field-group">
-                  <label class="field-label">Passcode</label>
-                  <div class="credential-box">
-                    <span class="numeric-val">849 201</span>
-                    <button class="refresh-tag" type="button" aria-label="Rotate passcode">Rotate</button>
+                <div class="credential-field">
+                  <span class="cred-label">Passcode</span>
+                  <div class="cred-display">
+                    <span class="code-text">849 201</span>
+                    <button class="cred-btn" type="button">Rotate</button>
                   </div>
                 </div>
 
-                <div class="panel-footer-note">
-                  <span class="shield-dot"></span> Share-Safe active during presentations
+                <div class="panel-meta-note">
+                  <svg class="meta-icon" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd" />
+                  </svg>
+                  <span>Window stays hidden if you share screen on Zoom or Meet</span>
                 </div>
               </div>
 
-              <!-- Right: Control Remote Partner -->
-              <div class="app-panel">
-                <div class="panel-header">
-                  <span class="panel-tag">Client</span>
-                  <h3 class="panel-title">Control Remote Computer</h3>
-                  <p class="panel-desc">Connect to another device running Connex.</p>
+              <!-- Right Column: Control Remote Partner -->
+              <div class="panel-box">
+                <div class="panel-top">
+                  <div class="panel-badge-row">
+                    <span class="mode-tag client">Client Mode</span>
+                  </div>
+                  <h3 class="panel-heading">Control Remote Computer</h3>
+                  <p class="panel-description">Enter the partner's credentials to start managing their desktop.</p>
                 </div>
 
-                <div class="field-group">
-                  <label class="field-label">Partner ID</label>
-                  <div class="input-box">
-                    <span class="input-mock-text">Enter 6-digit ID</span>
+                <div class="credential-field">
+                  <span class="cred-label">Partner Device ID</span>
+                  <div class="input-display">
+                    <span class="input-placeholder">e.g. 714 839</span>
                   </div>
                 </div>
 
-                <div class="field-group">
-                  <label class="field-label">Partner Passcode</label>
-                  <div class="input-box">
-                    <span class="input-mock-text">Enter passcode</span>
+                <div class="credential-field">
+                  <span class="cred-label">Partner Passcode</span>
+                  <div class="input-display">
+                    <span class="input-placeholder">Enter 6-digit passcode</span>
                   </div>
                 </div>
 
-                <div class="action-btn-mock">
+                <button class="btn-connect-mock" type="button">
                   Connect to Partner
+                  <svg class="icon-arrow" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- View 2: Active Remote Session View -->
+          <div id="view-session" class="mockup-body session-body">
+            <div class="remote-session-chrome">
+              <div class="session-stat-pill">
+                <span class="live-dot"></span>
+                <span>Connected: MacBook Pro (592 104)</span>
+              </div>
+              <div class="session-metrics">
+                <span class="metric-tag">30 FPS</span>
+                <span class="metric-tag">16 ms Latency</span>
+                <span class="metric-tag">WebRTC Direct</span>
+              </div>
+              <button class="session-btn-disconnect" type="button">Disconnect</button>
+            </div>
+
+            <!-- Remote Canvas Simulation -->
+            <div class="remote-canvas-preview">
+              <div class="desktop-mockup">
+                <div class="desktop-taskbar">
+                  <div class="taskbar-icons">
+                    <span class="dock-app-icon finder"></span>
+                    <span class="dock-app-icon code"></span>
+                    <span class="dock-app-icon term"></span>
+                  </div>
+                </div>
+                <div class="remote-cursor-mock">
+                  <svg viewBox="0 0 24 24" class="svg-cursor">
+                    <path d="M4 3l14 8-7 1.5L8 19z" fill="#3b82f6" stroke="#ffffff" stroke-width="1.5"/>
+                  </svg>
+                  <span class="cursor-tag">Controller Active</span>
                 </div>
               </div>
             </div>
           </div>
+
         </div>
       </div>
 
     </div>
   </section>
 
-  <!-- Features Grid -->
+  <!-- Core Features Bento Grid -->
   <section id="features" class="section">
     <div class="container">
-      <div class="section-header">
-        <h2 class="section-heading">Designed for Speed and Discretion</h2>
-        <p class="section-subheading">
-          Built from scratch in Rust and modern WebRTC to give you instant remote assistance without unnecessary overhead.
+      <div class="section-heading-wrap">
+        <h2 class="section-title">Engineered for Frictionless Remote Access</h2>
+        <p class="section-subtitle">
+          Connex strips away the bloat of traditional remote access software, focusing strictly on speed, security, and presentation safety.
         </p>
       </div>
 
-      <div class="features-grid">
-        <!-- Card 1 -->
-        <div class="feature-card">
-          <div class="feature-icon-box">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
+      <div class="bento-grid">
+        <!-- Feature 1: Share-Safe Window Privacy -->
+        <div class="bento-card bento-wide">
+          <div class="bento-content">
+            <div class="feature-icon-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <h3 class="bento-title">Share-Safe Window Privacy</h3>
+            <p class="bento-text">
+              Keep your remote assistance session completely hidden from meeting participants. While you present on Google Meet, Zoom, Microsoft Teams, or Slack, Connex is omitted from the broadcast feed so confidential diagnostics remain strictly on your monitor.
+            </p>
           </div>
-          <h3 class="feature-title">Share-Safe Window Privacy</h3>
-          <p class="feature-text">
-            Connex windows stay completely hidden from screen-sharing feeds in Google Meet, Zoom, Microsoft Teams, and Slack, ensuring your private notes and remote sessions stay confidential.
-          </p>
+          <div class="bento-visual privacy-visual">
+            <div class="privacy-comparison">
+              <div class="comp-col visible-col">
+                <span class="comp-label">Your Screen</span>
+                <div class="comp-preview host-preview">
+                  <div class="mini-app-window">
+                    <span class="mini-dot"></span> Connex Window Active
+                  </div>
+                </div>
+              </div>
+              <div class="comp-col hidden-col">
+                <span class="comp-label">Meeting Audience Sees</span>
+                <div class="comp-preview audience-preview">
+                  <div class="clean-desktop">Clean Desktop Only</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Card 2 -->
-        <div class="feature-card">
-          <div class="feature-icon-box">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Feature 2: Peer-to-Peer Engine -->
+        <div class="bento-card">
+          <div class="feature-icon-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
             </svg>
           </div>
-          <h3 class="feature-title">Peer-to-Peer Performance</h3>
-          <p class="feature-text">
-            High frame-rate 30 FPS display streaming and low-latency mouse and keyboard input transmitted directly between peers over encrypted WebRTC data channels.
+          <h3 class="bento-title">Direct P2P WebRTC</h3>
+          <p class="bento-text">
+            Display frames stream directly between your devices at 30 FPS over end-to-end encrypted DTLS-SRTP data channels with sub-50ms round-trip latency.
           </p>
         </div>
 
-        <!-- Card 3 -->
-        <div class="feature-card">
-          <div class="feature-icon-box">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Feature 3: Zero-Account Access -->
+        <div class="bento-card">
+          <div class="feature-icon-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
           </div>
-          <h3 class="feature-title">Zero Account Friction</h3>
-          <p class="feature-text">
-            No registration, email verification, or account sign-ins. Launch the app, exchange your 6-digit device ID and passcode, and begin your session instantly.
+          <h3 class="bento-title">Instant Numeric ID & PIN</h3>
+          <p class="bento-text">
+            No registration emails, passwords, or corporate login walls. Every installation generates a 6-digit device ID and a passcode you can rotate at any second.
           </p>
         </div>
 
-        <!-- Card 4 -->
-        <div class="feature-card">
-          <div class="feature-icon-box">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-              <line x1="8" y1="21" x2="16" y2="21"/>
-              <line x1="12" y1="17" x2="12" y2="21"/>
+        <!-- Feature 4: Ultra Lightweight Core -->
+        <div class="bento-card">
+          <div class="feature-icon-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="4" y="4" width="16" height="16" rx="2"/>
+              <rect x="9" y="9" width="6" height="6"/>
+              <line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/>
+              <line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/>
             </svg>
           </div>
-          <h3 class="feature-title">Native & Lightweight</h3>
-          <p class="feature-text">
-            Built natively with Rust and Tauri instead of heavy Chromium runtimes. Uses under 30 MB of RAM and launches in milliseconds on macOS and Windows.
+          <h3 class="bento-title">Native Rust Performance</h3>
+          <p class="bento-text">
+            Compiled natively with Rust and Tauri rather than a heavy Chromium web browser bundle. Launches instantly and consumes under 30 MB of system memory.
+          </p>
+        </div>
+
+        <!-- Feature 5: Full Remote Input -->
+        <div class="bento-card">
+          <div class="feature-icon-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 3l15 7-6.5 2.2L11 19z"/>
+            </svg>
+          </div>
+          <h3 class="bento-title">Low-Latency Input Sync</h3>
+          <p class="bento-text">
+            Responsive pointer tracking, left/right/middle click support, mouse scroll wheel, and full keyboard shortcut injection transmitted over binary channels.
           </p>
         </div>
       </div>
@@ -240,111 +344,109 @@
   </section>
 
   <!-- Downloads Section -->
-  <section id="downloads" class="section section-dark">
+  <section id="downloads" class="section section-downloads">
     <div class="container">
-      <div class="section-header">
-        <h2 class="section-heading">Download Connex</h2>
-        <p class="section-subheading">
-          Free, open source, and built directly from the latest source code on GitHub.
+      <div class="section-heading-wrap">
+        <h2 class="section-title">Download Connex</h2>
+        <p class="section-subtitle">
+          Clean binaries compiled directly by GitHub Actions. Free, verified, and always open source.
         </p>
       </div>
 
-      <div class="downloads-grid">
+      <div class="downloads-row">
         <!-- macOS Apple Silicon -->
-        <div class="download-card primary-card">
-          <div class="card-os-header">
-            <svg class="os-brand-icon" viewBox="0 0 24 24" fill="currentColor">
+        <div class="dl-platform-card featured-dl">
+          <div class="dl-card-header">
+            <svg class="dl-os-icon" viewBox="0 0 24 24" fill="currentColor">
               <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 1.01-2.87-.96.04-2.1.65-2.77 1.44-.59.69-.99 1.74-.94 2.8.06.01.12.02.19.02.94 0 1.9-.64 2.51-1.39z"/>
             </svg>
             <div>
-              <h3 class="card-os-title">macOS</h3>
-              <p class="card-os-sub">Apple Silicon (M1/M2/M3/M4)</p>
+              <h3 class="dl-card-name">macOS</h3>
+              <span class="dl-arch-badge">Apple Silicon (M1/M2/M3/M4)</span>
             </div>
           </div>
-          <p class="card-meta">Format: <code>.dmg</code> • macOS 11.0 or later</p>
-          <a id="link-mac-arm" href="https://github.com/gurukannan22/connex-app/releases/latest" class="btn btn-card-primary">
+          <p class="dl-spec">Format: <code>.dmg</code> • macOS 11.0 or newer</p>
+          <a id="link-mac-arm" href="https://github.com/gurukannan22/connex-app/releases/latest" class="btn btn-dl-primary">
             Download .dmg
           </a>
         </div>
 
         <!-- macOS Intel -->
-        <div class="download-card">
-          <div class="card-os-header">
-            <svg class="os-brand-icon" viewBox="0 0 24 24" fill="currentColor">
+        <div class="dl-platform-card">
+          <div class="dl-card-header">
+            <svg class="dl-os-icon" viewBox="0 0 24 24" fill="currentColor">
               <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 1.01-2.87-.96.04-2.1.65-2.77 1.44-.59.69-.99 1.74-.94 2.8.06.01.12.02.19.02.94 0 1.9-.64 2.51-1.39z"/>
             </svg>
             <div>
-              <h3 class="card-os-title">macOS</h3>
-              <p class="card-os-sub">Intel x86_64</p>
+              <h3 class="dl-card-name">macOS</h3>
+              <span class="dl-arch-badge">Intel x86_64</span>
             </div>
           </div>
-          <p class="card-meta">Format: <code>.dmg</code> • macOS 10.15 or later</p>
-          <a id="link-mac-intel" href="https://github.com/gurukannan22/connex-app/releases/latest" class="btn btn-card-secondary">
+          <p class="dl-spec">Format: <code>.dmg</code> • macOS 10.15 or newer</p>
+          <a id="link-mac-intel" href="https://github.com/gurukannan22/connex-app/releases/latest" class="btn btn-dl-secondary">
             Download .dmg
           </a>
         </div>
 
         <!-- Windows Setup -->
-        <div class="download-card primary-card">
-          <div class="card-os-header">
-            <svg class="os-brand-icon" viewBox="0 0 24 24" fill="currentColor">
+        <div class="dl-platform-card featured-dl">
+          <div class="dl-card-header">
+            <svg class="dl-os-icon" viewBox="0 0 24 24" fill="currentColor">
               <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
             </svg>
             <div>
-              <h3 class="card-os-title">Windows</h3>
-              <p class="card-os-sub">Windows 10 & 11 (64-bit)</p>
+              <h3 class="dl-card-name">Windows</h3>
+              <span class="dl-arch-badge">64-bit Installer</span>
             </div>
           </div>
-          <p class="card-meta">Format: <code>.exe</code> • Standard Installer</p>
-          <a id="link-win-exe" href="https://github.com/gurukannan22/connex-app/releases/latest" class="btn btn-card-primary">
+          <p class="dl-spec">Format: <code>.exe</code> • Windows 10 & 11</p>
+          <a id="link-win-exe" href="https://github.com/gurukannan22/connex-app/releases/latest" class="btn btn-dl-primary">
             Download .exe
           </a>
         </div>
 
         <!-- Windows MSI -->
-        <div class="download-card">
-          <div class="card-os-header">
-            <svg class="os-brand-icon" viewBox="0 0 24 24" fill="currentColor">
+        <div class="dl-platform-card">
+          <div class="dl-card-header">
+            <svg class="dl-os-icon" viewBox="0 0 24 24" fill="currentColor">
               <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
             </svg>
             <div>
-              <h3 class="card-os-title">Windows</h3>
-              <p class="card-os-sub">Enterprise / MSI Package</p>
+              <h3 class="dl-card-name">Windows</h3>
+              <span class="dl-arch-badge">Enterprise Package</span>
             </div>
           </div>
-          <p class="card-meta">Format: <code>.msi</code> • Active Directory / Intune</p>
-          <a id="link-win-msi" href="https://github.com/gurukannan22/connex-app/releases/latest" class="btn btn-card-secondary">
+          <p class="dl-spec">Format: <code>.msi</code> • AD / Intune Deployment</p>
+          <a id="link-win-msi" href="https://github.com/gurukannan22/connex-app/releases/latest" class="btn btn-dl-secondary">
             Download .msi
           </a>
         </div>
       </div>
 
-      <!-- Release Status Bar -->
-      <div class="release-status-bar">
-        <div class="status-indicator-group">
-          <span class="status-live-dot"></span>
+      <!-- Live Release Feed Bar -->
+      <div class="release-info-bar">
+        <div class="rel-meta-cluster">
+          <span class="rel-live-dot"></span>
           <span id="rel-tag">Release v0.1.0</span>
-          <span class="status-sep">•</span>
-          <span id="rel-published">Verified Build</span>
+          <span class="rel-bullet">•</span>
+          <span id="rel-published">Verified GitHub Build</span>
         </div>
-        <a id="rel-link" href="https://github.com/gurukannan22/connex-app/releases" target="_blank" rel="noopener noreferrer" class="release-notes-link">
-          Release Notes on GitHub →
+        <a id="rel-link" href="https://github.com/gurukannan22/connex-app/releases" target="_blank" rel="noopener noreferrer" class="rel-link">
+          View Changelog on GitHub →
         </a>
       </div>
 
-      <!-- macOS First Time Launch Note -->
-      <div class="security-callout">
-        <div class="callout-header">
-          <svg class="callout-icon" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-          </svg>
-          <span>macOS First Launch Instructions</span>
+      <!-- macOS Gatekeeper Instruction Box -->
+      <div class="gatekeeper-box">
+        <div class="gatekeeper-header">
+          <span class="gatekeeper-badge">macOS Tip</span>
+          <span class="gatekeeper-title">First-time Launch Setup</span>
         </div>
-        <p class="callout-text">
-          Because Connex is an open-source tool without a corporate Apple Developer certificate, macOS Gatekeeper may prompt: <em>"Connex is damaged and can't be opened."</em> Run this one-time command in <strong>Terminal</strong> to clear quarantine:
+        <p class="gatekeeper-text">
+          Because Connex is an open-source tool without a corporate Apple Developer certificate, macOS Gatekeeper may show: <em>"Connex is damaged and can't be opened."</em> Run this one-time command in <strong>Terminal</strong> to clear quarantine:
         </p>
-        <div class="terminal-command-wrap">
-          <code class="terminal-code">xattr -cr /Applications/Connex.app</code>
+        <div class="command-pill">
+          <code>xattr -cr /Applications/Connex.app</code>
         </div>
       </div>
 
@@ -357,19 +459,19 @@
       <div class="footer-left">
         <div class="footer-brand">
           <img src="assets/logo.png" alt="Connex" class="footer-logo" />
-          <span class="footer-title">Connex</span>
+          <span class="footer-name">Connex</span>
         </div>
-        <p class="footer-tagline">Lightweight, private remote desktop for macOS and Windows.</p>
+        <p class="footer-tagline">Fast, lightweight, private remote desktop for macOS and Windows.</p>
       </div>
 
-      <div class="footer-right">
+      <div class="footer-nav">
         <a href="https://github.com/gurukannan22/connex-app" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="https://github.com/gurukannan22/connex-app/releases" target="_blank" rel="noopener noreferrer">Releases</a>
-        <a href="https://github.com/gurukannan22/connex-app/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">License (MIT)</a>
+        <a href="https://github.com/gurukannan22/connex-app/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a>
       </div>
     </div>
     <div class="container footer-bottom">
-      <p>© 2026 Connex. Open source under the MIT License.</p>
+      <p>© 2026 Connex. Released as free and open source software under the MIT License.</p>
     </div>
   </footer>
 
