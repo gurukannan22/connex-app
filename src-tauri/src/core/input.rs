@@ -133,7 +133,168 @@ fn parse_key(key: &str) -> Option<Key> {
         "Meta" | "Command" | "Win" => Key::Meta,
         "CapsLock" => Key::CapsLock,
         "Space" | " " => Key::Space,
-        s if s.len() == 1 => Key::Unicode(s.chars().next()?),
+        s if s.chars().count() == 1 => Key::Unicode(s.chars().next()?),
         _ => return None,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_common_keys() {
+        assert_eq!(parse_key("Enter"), Some(Key::Return));
+        assert_eq!(parse_key("Backspace"), Some(Key::Backspace));
+        assert_eq!(parse_key("Tab"), Some(Key::Tab));
+        assert_eq!(parse_key("Escape"), Some(Key::Escape));
+        assert_eq!(parse_key("Esc"), Some(Key::Escape));
+        assert_eq!(parse_key("Delete"), Some(Key::Delete));
+        assert_eq!(parse_key("ArrowUp"), Some(Key::UpArrow));
+        assert_eq!(parse_key("ArrowDown"), Some(Key::DownArrow));
+        assert_eq!(parse_key("ArrowLeft"), Some(Key::LeftArrow));
+        assert_eq!(parse_key("ArrowRight"), Some(Key::RightArrow));
+        assert_eq!(parse_key("Space"), Some(Key::Space));
+        assert_eq!(parse_key(" "), Some(Key::Space));
+    }
+
+    #[test]
+    fn test_parse_modifiers_and_function_keys() {
+        assert_eq!(parse_key("Control"), Some(Key::Control));
+        assert_eq!(parse_key("Alt"), Some(Key::Alt));
+        assert_eq!(parse_key("Shift"), Some(Key::Shift));
+        assert_eq!(parse_key("Meta"), Some(Key::Meta));
+        assert_eq!(parse_key("Command"), Some(Key::Meta));
+        assert_eq!(parse_key("F1"), Some(Key::F1));
+        assert_eq!(parse_key("F12"), Some(Key::F12));
+    }
+
+    #[test]
+    fn test_parse_single_characters() {
+        assert_eq!(parse_key("a"), Some(Key::Unicode('a')));
+        assert_eq!(parse_key("Z"), Some(Key::Unicode('Z')));
+        assert_eq!(parse_key("9"), Some(Key::Unicode('9')));
+        assert_eq!(parse_key("@"), Some(Key::Unicode('@')));
+    }
+
+    #[test]
+    fn test_parse_invalid_key() {
+        assert_eq!(parse_key("SomeVeryLongUnrecognizedKeyName"), None);
+        assert_eq!(parse_key(""), None);
+    }
+
+    #[test]
+    fn test_input_event_serialization() {
+        let mouse_move = InputEvent::MouseMove { x: 0.45, y: 0.82 };
+        let json = serde_json::to_string(&mouse_move).unwrap();
+        assert!(json.contains(r#""type":"mouse_move""#));
+
+        let deserialized: InputEvent = serde_json::from_str(&json).unwrap();
+        match deserialized {
+            InputEvent::MouseMove { x, y } => {
+                assert!((x - 0.45).abs() < f64::EPSILON);
+                assert!((y - 0.82).abs() < f64::EPSILON);
+            }
+            _ => panic!("Expected MouseMove variant"),
+        }
+    }
+
+    #[test]
+    fn test_parse_all_function_keys() {
+        assert_eq!(parse_key("F1"), Some(Key::F1));
+        assert_eq!(parse_key("F2"), Some(Key::F2));
+        assert_eq!(parse_key("F3"), Some(Key::F3));
+        assert_eq!(parse_key("F4"), Some(Key::F4));
+        assert_eq!(parse_key("F5"), Some(Key::F5));
+        assert_eq!(parse_key("F6"), Some(Key::F6));
+        assert_eq!(parse_key("F7"), Some(Key::F7));
+        assert_eq!(parse_key("F8"), Some(Key::F8));
+        assert_eq!(parse_key("F9"), Some(Key::F9));
+        assert_eq!(parse_key("F10"), Some(Key::F10));
+        assert_eq!(parse_key("F11"), Some(Key::F11));
+        assert_eq!(parse_key("F12"), Some(Key::F12));
+    }
+
+    #[test]
+    fn test_parse_navigation_and_control_keys() {
+        assert_eq!(parse_key("Home"), Some(Key::Home));
+        assert_eq!(parse_key("End"), Some(Key::End));
+        assert_eq!(parse_key("PageUp"), Some(Key::PageUp));
+        assert_eq!(parse_key("PageDown"), Some(Key::PageDown));
+        assert_eq!(parse_key("CapsLock"), Some(Key::CapsLock));
+        assert_eq!(parse_key("Win"), Some(Key::Meta));
+    }
+
+    #[test]
+    fn test_parse_unicode_characters() {
+        assert_eq!(parse_key("€"), Some(Key::Unicode('€')));
+        assert_eq!(parse_key("ñ"), Some(Key::Unicode('ñ')));
+        assert_eq!(parse_key("π"), Some(Key::Unicode('π')));
+    }
+
+    #[test]
+    fn test_all_input_event_variants_serde() {
+        // MouseButton
+        let btn = InputEvent::MouseButton {
+            button: MouseButton::Right,
+            pressed: true,
+        };
+        let json = serde_json::to_string(&btn).unwrap();
+        assert!(json.contains(r#""type":"mouse_button""#));
+        assert!(json.contains(r#""button":"right""#));
+        let de: InputEvent = serde_json::from_str(&json).unwrap();
+        match de {
+            InputEvent::MouseButton { button, pressed } => {
+                assert!(matches!(button, MouseButton::Right));
+                assert!(pressed);
+            }
+            _ => panic!("Expected MouseButton"),
+        }
+
+        // MouseScroll
+        let scroll = InputEvent::MouseScroll {
+            delta_x: -120,
+            delta_y: 240,
+        };
+        let json = serde_json::to_string(&scroll).unwrap();
+        assert!(json.contains(r#""type":"mouse_scroll""#));
+        let de: InputEvent = serde_json::from_str(&json).unwrap();
+        match de {
+            InputEvent::MouseScroll { delta_x, delta_y } => {
+                assert_eq!(delta_x, -120);
+                assert_eq!(delta_y, 240);
+            }
+            _ => panic!("Expected MouseScroll"),
+        }
+
+        // KeyPress
+        let key_press = InputEvent::KeyPress {
+            key: "Escape".to_string(),
+            pressed: false,
+        };
+        let json = serde_json::to_string(&key_press).unwrap();
+        assert!(json.contains(r#""type":"key_press""#));
+        let de: InputEvent = serde_json::from_str(&json).unwrap();
+        match de {
+            InputEvent::KeyPress { key, pressed } => {
+                assert_eq!(key, "Escape");
+                assert!(!pressed);
+            }
+            _ => panic!("Expected KeyPress"),
+        }
+
+        // TypeText
+        let type_text = InputEvent::TypeText {
+            text: "Hello, Connex P2P!".to_string(),
+        };
+        let json = serde_json::to_string(&type_text).unwrap();
+        assert!(json.contains(r#""type":"type_text""#));
+        let de: InputEvent = serde_json::from_str(&json).unwrap();
+        match de {
+            InputEvent::TypeText { text } => {
+                assert_eq!(text, "Hello, Connex P2P!");
+            }
+            _ => panic!("Expected TypeText"),
+        }
+    }
 }

@@ -30,18 +30,61 @@ function setupMockupTabs() {
 
   if (!tabHome || !tabSession) return;
 
-  tabHome.addEventListener("click", () => {
+  function switchToHome() {
     tabHome.classList.add("active");
     tabSession.classList.remove("active");
     viewHome.classList.add("active");
     viewSession.classList.remove("active");
-  });
+  }
 
-  tabSession.addEventListener("click", () => {
+  function switchToSession() {
     tabSession.classList.add("active");
     tabHome.classList.remove("active");
     viewSession.classList.add("active");
     viewHome.classList.remove("active");
+  }
+
+  tabHome.addEventListener("click", switchToHome);
+  tabSession.addEventListener("click", switchToSession);
+
+  // Connect mock button switches to session view
+  const btnConnect = document.querySelector(".btn-connect-mock");
+  if (btnConnect) {
+    btnConnect.addEventListener("click", switchToSession);
+  }
+
+  // Disconnect mock button switches back to home setup
+  const btnDisconnect = document.querySelector(".session-btn-disconnect");
+  if (btnDisconnect) {
+    btnDisconnect.addEventListener("click", switchToHome);
+  }
+
+  // Mock Copy & Rotate buttons
+  const credButtons = document.querySelectorAll(".cred-btn");
+  credButtons.forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const text = btn.textContent.trim();
+      if (text.includes("Copy")) {
+        const idSpan = btn.parentElement.querySelector(".code-text");
+        if (idSpan && navigator.clipboard) {
+          navigator.clipboard.writeText(idSpan.textContent.replace(/\s+/g, "")).catch(() => {});
+        }
+        const orig = btn.textContent;
+        btn.textContent = "Copied!";
+        btn.disabled = true;
+        setTimeout(() => {
+          btn.textContent = orig;
+          btn.disabled = false;
+        }, 1200);
+      } else if (text.includes("Rotate")) {
+        const passSpan = btn.parentElement.querySelector(".code-text");
+        if (passSpan) {
+          const rand = Math.floor(100000 + Math.random() * 900000);
+          const formatted = `${String(rand).slice(0, 3)} ${String(rand).slice(3)}`;
+          passSpan.textContent = formatted;
+        }
+      }
+    });
   });
 }
 

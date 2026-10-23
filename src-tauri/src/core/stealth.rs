@@ -97,3 +97,40 @@ mod windows {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_apply_stealth_does_not_panic() {
+        // In a headless CLI test environment, applying window stealth should safely complete
+        let res = apply_stealth();
+        assert!(res.is_ok(), "apply_stealth should not return error or panic");
+    }
+
+    #[test]
+    fn test_apply_stealth_idempotent() {
+        // Calling apply_stealth repeatedly must be safe and idempotent
+        for _ in 0..5 {
+            let res = apply_stealth();
+            assert!(res.is_ok(), "Repeated apply_stealth calls must succeed");
+        }
+    }
+
+    #[test]
+    fn test_apply_stealth_multithreaded() {
+        // Calling apply_stealth concurrently across multiple threads should be thread-safe
+        let mut handles = Vec::new();
+        for _ in 0..4 {
+            handles.push(std::thread::spawn(|| {
+                apply_stealth()
+            }));
+        }
+
+        for handle in handles {
+            let res = handle.join().expect("Thread should not panic");
+            assert!(res.is_ok(), "Concurrent apply_stealth should succeed");
+        }
+    }
+}

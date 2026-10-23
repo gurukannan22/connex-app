@@ -4,7 +4,7 @@
 
 use crate::core::identity::DeviceIdentity;
 use crate::core::input::{inject, InputEvent};
-use crate::core::session::Session;
+use crate::core::session::{Role, Session};
 use crate::core::signaling::{
     apply_answer, create_answer, create_offer, decode_payload, encode_payload,
     encode_payload_with_passcode,
@@ -354,19 +354,29 @@ pub async fn stop_capture(state: State<'_, ConnexState>) -> Result<(), String> {
     Ok(())
 }
 
-/// Inject an input event from controller (forward over WebRTC if connected, or execute locally)
+/// Inject an input event from controller (forward over WebRTC if connected, or execute locally if host)
 #[tauri::command]
 pub async fn inject_input(
     event_json: String,
     state: State<'_, ConnexState>,
 ) -> Result<(), String> {
-    // If controller is connected via WebRTC input channel, send event to host
+    // If controller is connected via WebRTC input channel, send event to host and do NOT execute locally
     let ch = state.controller_input_channel.lock().await.clone();
     if let Some(ref input_ch) = ch {
-        let _ = input_ch.send_text(event_json.clone()).await;
+        let _ = input_ch.send_text(event_json).await;
+        return Ok(());
     }
 
-    // Also execute on local host (for host testing or direct execution)
+    // Only execute on local machine if this instance is the host or standalone test
+    let is_controller = {
+        let s = state.session.lock().await;
+        matches!(s.as_ref().map(|sess| &sess.role), Some(Role::Controller))
+    };
+    if is_controller {
+        // Controller without active data channel yet; drop to avoid hijacking local input
+        return Ok(());
+    }
+
     let event: InputEvent = serde_json::from_str(&event_json).map_err(|e| e.to_string())?;
     let (w, h) = crate::core::capture::display_size().map_err(|e| e.to_string())?;
     let _ = inject(event, w as u32, h as u32);
@@ -395,6 +405,25 @@ pub struct FrameEvent {
 mod tests {
     use super::*;
 
+    #[test]
+    fn test_connex_state_initialization() {
+        let state = ConnexState::new();
+        assert!(!state.stop_capture.load(Ordering::Relaxed));
+    }
+
+    #[test]
+    fn test_frame_event_serialization() {
+        let frame_event = FrameEvent {
+            frame_b64: "dGVzdC1mcmFtZQ==".to_string(),
+            width: 1920,
+            height: 1080,
+        };
+        let json = serde_json::to_string(&frame_event).expect("Serialize must succeed");
+        assert!(json.contains("frame_b64"));
+        assert!(json.contains("1920"));
+        assert!(json.contains("1080"));
+    }
+
     #[tokio::test]
     async fn test_create_session() {
         println!("Starting create_peer_connection...");
@@ -406,5 +435,44 @@ mod tests {
         println!("Offer created! len = {}", offer.sdp.len());
         tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
         println!("Done!");
+    }
+
+    #[tokio::test]
+    async fn test_connex_state_concurrent_locks() {
+        let state = Arc::new(ConnexState::new());
+        let mut handles = Vec::new();
+
+        for i in 0..5 {
+            let state_clone = Arc::clone(&state);
+            handles.push(tokio::spawn(async move {
+                let mut sess = state_clone.session.lock().await;
+                *sess = Some(Session::new_host(format!("10000{}", i)));
+                let stop = state_clone.stop_capture.load(Ordering::Relaxed);
+                assert!(!stop);
+            }));
+        }
+
+        for h in handles {
+            h.await.unwrap();
+        }
+
+        let sess = state.session.lock().await;
+        assert!(sess.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_connex_state_reset_simulation() {
+        let state = ConnexState::new();
+
+        // 1. Populate
+        *state.session.lock().await = Some(Session::new_controller("555444".to_string()));
+        state.stop_capture.store(false, Ordering::Relaxed);
+
+        // 2. Reset (simulating stop_capture command)
+        state.stop_capture.store(true, Ordering::Relaxed);
+        *state.session.lock().await = None;
+
+        assert!(state.stop_capture.load(Ordering::Relaxed));
+        assert!(state.session.lock().await.is_none());
     }
 }

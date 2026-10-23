@@ -119,3 +119,29 @@ where
         Box::pin(async {})
     }));
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_channel_constants() {
+        assert_eq!(CHANNEL_FRAMES, "connex-frames");
+        assert_eq!(CHANNEL_INPUT, "connex-input");
+        assert_eq!(CHANNEL_CONTROL, "connex-control");
+    }
+
+    #[tokio::test]
+    async fn test_create_peer_connection_and_channels() {
+        let peer = create_peer_connection().await.expect("Peer connection should be created");
+        let (frames_ch, input_ch, control_ch) = create_host_channels(&peer)
+            .await
+            .expect("Host channels creation should succeed");
+
+        assert_eq!(frames_ch.label(), CHANNEL_FRAMES);
+        assert_eq!(input_ch.label(), CHANNEL_INPUT);
+        assert_eq!(control_ch.label(), CHANNEL_CONTROL);
+
+        let _ = peer.close().await;
+    }
+}

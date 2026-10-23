@@ -50,6 +50,8 @@ pub fn start_capture(
         let capturer = &mut capturer.0;
         let mut last_frame = Instant::now();
 
+        let mut rgb = Vec::new();
+
         loop {
             if stop_signal.load(Ordering::Relaxed) {
                 info!("[capture] Stop signal received, exiting capture loop");
@@ -65,17 +67,19 @@ pub fn start_capture(
 
             match capturer.frame() {
                 Ok(frame) => {
-                    // Convert BGRA → RGBA
-                    let mut rgba = Vec::with_capacity(frame.len());
-                    for chunk in frame.chunks_exact(4) {
-                        rgba.push(chunk[2]); // R (was B)
-                        rgba.push(chunk[1]); // G
-                        rgba.push(chunk[0]); // B (was R)
-                        rgba.push(chunk[3]); // A
+                    // Convert BGRA (4 bytes) → RGB (3 bytes) in-place (saves 25% bandwidth)
+                    let expected_rgb_len = (frame.len() / 4) * 3;
+                    if rgb.len() != expected_rgb_len {
+                        rgb.resize(expected_rgb_len, 0);
+                    }
+                    for (dst, src) in rgb.chunks_exact_mut(3).zip(frame.chunks_exact(4)) {
+                        dst[0] = src[2]; // R (was B)
+                        dst[1] = src[1]; // G
+                        dst[2] = src[0]; // B (was R)
                     }
 
                     // Encode to JPEG
-                    if let Some(b64) = encode_jpeg(&rgba, width as u32, height as u32) {
+                    if let Some(b64) = encode_jpeg(&rgb, width as u32, height as u32) {
                         if tx.try_send(b64).is_err() {
                             // Receiver full or dropped — skip frame (no lag accumulation)
                         }
@@ -96,12 +100,15 @@ pub fn start_capture(
     Ok(rx)
 }
 
-/// Encode raw RGBA bytes to base64-encoded JPEG string
-fn encode_jpeg(rgba: &[u8], width: u32, height: u32) -> Option<FrameB64> {
+/// Encode raw RGB bytes to base64-encoded JPEG string
+fn encode_jpeg(rgb: &[u8], width: u32, height: u32) -> Option<FrameB64> {
+    if width == 0 || height == 0 || rgb.len() != (width as usize * height as usize * 3) {
+        return None;
+    }
     let mut buf = Cursor::new(Vec::new());
     let mut encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut buf, JPEG_QUALITY);
     encoder
-        .encode(rgba, width, height, image::ExtendedColorType::Rgba8)
+        .encode(rgb, width, height, image::ExtendedColorType::Rgb8)
         .ok()?;
 
     Some(B64.encode(buf.into_inner()))
@@ -111,4 +118,85 @@ fn encode_jpeg(rgba: &[u8], width: u32, height: u32) -> Option<FrameB64> {
 pub fn display_size() -> Result<(usize, usize)> {
     let display = Display::primary().context("No primary display")?;
     Ok((display.width(), display.height()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_encode_jpeg_valid_rgb() {
+        // Create synthetic 2x2 RGB image (3 bytes per pixel)
+        let width = 2;
+        let height = 2;
+        let rgb = vec![
+            255, 0, 0,    // Red
+            0, 255, 0,    // Green
+            0, 0, 255,    // Blue
+            255, 255, 255 // White
+        ];
+
+        let encoded = encode_jpeg(&rgb, width, height);
+        assert!(encoded.is_some(), "JPEG encoding of valid RGB must succeed");
+        let b64 = encoded.unwrap();
+        assert!(!b64.is_empty());
+
+        // Verify it can be decoded back to an image
+        let bytes = B64.decode(&b64).expect("Base64 decode must succeed");
+        let img = image::load_from_memory(&bytes).expect("Decoded bytes must form valid image");
+        assert_eq!(img.width(), width);
+        assert_eq!(img.height(), height);
+    }
+
+    #[test]
+    fn test_encode_jpeg_invalid_dimensions() {
+        let rgb = vec![255, 0, 0];
+        // 0 dimensions should safely return None without panicking
+        assert!(encode_jpeg(&rgb, 0, 1).is_none());
+        assert!(encode_jpeg(&rgb, 1, 0).is_none());
+        // Dimension mismatch should safely return None
+        assert!(encode_jpeg(&rgb, 2, 2).is_none());
+    }
+
+    #[test]
+    fn test_encode_jpeg_magic_bytes() {
+        let rgb = vec![128, 128, 128]; // 1x1 pixel
+        let encoded = encode_jpeg(&rgb, 1, 1).expect("1x1 encoding must succeed");
+        let bytes = B64.decode(&encoded).expect("Decode base64");
+
+        // JPEG standard Start of Image (SOI) is 0xFF, 0xD8
+        assert!(bytes.len() >= 4);
+        assert_eq!(bytes[0], 0xFF);
+        assert_eq!(bytes[1], 0xD8);
+        // End of Image (EOI) is 0xFF, 0xD9
+        let len = bytes.len();
+        assert_eq!(bytes[len - 2], 0xFF);
+        assert_eq!(bytes[len - 1], 0xD9);
+    }
+
+    #[test]
+    fn test_encode_jpeg_various_dimensions() {
+        // Odd dimensions: 3 width x 5 height = 15 pixels = 45 bytes
+        let rgb = vec![100u8; 3 * 5 * 3];
+        let encoded = encode_jpeg(&rgb, 3, 5).expect("Odd dimension encoding must succeed");
+        let bytes = B64.decode(&encoded).unwrap();
+        let img = image::load_from_memory(&bytes).unwrap();
+        assert_eq!(img.width(), 3);
+        assert_eq!(img.height(), 5);
+    }
+
+    #[test]
+    fn test_encode_jpeg_buffer_off_by_one() {
+        let width = 4;
+        let height = 4;
+        let expected_len = (width * height * 3) as usize; // 48 bytes
+
+        // One byte short
+        let too_short = vec![0u8; expected_len - 1];
+        assert!(encode_jpeg(&too_short, width, height).is_none());
+
+        // One byte extra
+        let too_long = vec![0u8; expected_len + 1];
+        assert!(encode_jpeg(&too_long, width, height).is_none());
+    }
 }
