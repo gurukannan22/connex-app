@@ -11,14 +11,12 @@ Connex provides UltraViewer-style remote desktop functionality with **native scr
 
 | Feature | Details |
 |---|---|
-| **Meeting Invisibility** | Completely hidden on Zoom, Google Meet, Teams, and OBS screen sharing |
-| **macOS Native Stealth** | Uses `NSWindowSharingNone (0)` via Quartz Compositor |
-| **Windows Native Stealth** | Uses `SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)` via DWM |
-| **Device ID & Passcode** | UltraViewer-style 6-digit Device ID + rotatable 6-digit passcode |
-| **Direct P2P WebRTC** | Direct peer-to-peer display streaming at 30 FPS with Google STUN |
-| **Remote Control** | Low-latency mouse movement, left/right/middle click, scroll, and keystrokes |
+| **Meeting Window Privacy** | Keeps remote session window private during screen shares (Zoom, Meet, Teams, Slack) |
+| **Device ID & Passcode** | 6-digit Device ID + rotatable 6-digit passcode for consent-based access |
+| **Direct P2P WebRTC** | Direct peer-to-peer display streaming at 30 FPS |
+| **Remote Control** | Low-latency mouse movement, click, scroll, and keystroke injection |
 | **End-to-End Encrypted** | Encrypted with DTLS-SRTP — no central server relaying your desktop frames |
-| **Ultra Lightweight** | Built in Rust. Tiny memory footprint (<25MB RAM) and instant launch |
+| **Ultra Lightweight** | Built in Rust. Tiny memory footprint (<30MB RAM) and instant launch |
 
 ---
 
@@ -34,12 +32,11 @@ Connex provides UltraViewer-style remote desktop functionality with **native scr
 
 ## Tech Stack
 
-- **Backend**: Rust 1.82+ with Tokio async runtime
+- **Backend**: Rust with Tokio async runtime
 - **UI & App Shell**: Tauri v2 + Vite + Vanilla CSS/JS
-- **Screen Capture**: `scrap` crate (zero-copy DXGI on Windows, CGDisplayStream on macOS)
-- **Input Injection**: `enigo` crate (CGEvent on macOS, SendInput on Windows)
-- **Networking**: `webrtc-rs` with data channels (`connex-frames`, `connex-input`)
-- **Stealth Windows & macOS**: `objc2` (AppKit `setSharingType:`) and `windows` crate (`WDA_EXCLUDEFROMCAPTURE`)
+- **Screen Capture**: `scrap` crate
+- **Input Injection**: `enigo` crate
+- **Networking**: `webrtc-rs` with direct data channels (`connex-frames`, `connex-input`)
 
 ---
 
