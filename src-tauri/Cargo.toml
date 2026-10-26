@@ -1,6 +1,6 @@
 [package]
 name = "connex"
-version = "0.1.0"
+version = "0.1.1"
 description = "Connex - Remote Desktop App"
 authors = ["Connex"]
 edition = "2021"
