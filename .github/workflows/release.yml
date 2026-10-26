@@ -15,7 +15,9 @@ permissions:
   id-token: write
 
 concurrency:
-  group: 'release-and-pages'
+  # Keep Pages deployments and each versioned release in separate queues.
+  # A new main push must not cancel or replace a pending release build.
+  group: connex-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
