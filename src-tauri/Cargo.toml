@@ -49,6 +49,8 @@ image = "0.25"
 
 # Random code generation
 rand = "0.8"
+hmac = "0.12"
+sha2 = "0.10"
 
 # Error handling
 anyhow = "1"

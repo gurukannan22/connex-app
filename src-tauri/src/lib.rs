@@ -21,14 +21,8 @@ pub fn run() {
         .setup(|app| {
             info!("[connex] Application starting");
 
-            // Connex runs as a normal, visible application: it shows in the
-            // Dock / taskbar and is included in screen shares like any other
-            // window. Anyone sharing their screen can see it is running.
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.show();
-
-                // Stealth mode: exclude Connex window from screen capture (Zoom, Google Meet, OBS, Teams)
-                let _ = crate::core::stealth::apply_stealth();
             }
 
             Ok(())
@@ -36,14 +30,16 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_device_identity,
             rotate_passcode,
-            apply_stealth,
+            set_stealth_mode,
             host_create_session,
             controller_join_session,
             host_apply_answer,
             start_capture,
+            list_displays,
             stop_capture,
             inject_input,
             get_session,
+            send_chat_message,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Connex application");

@@ -35,6 +35,12 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "windows": {
+      "webviewInstallMode": {
+        "type": "offlineInstaller",
+        "silent": true
+      }
+    },
     "macOS": {
       "signingIdentity": "-"
     },

@@ -7,12 +7,7 @@ on:
     branches:
       - main
   workflow_dispatch:
-    inputs:
-      create_release:
-        description: 'Publish as official GitHub Release'
-        required: false
-        type: boolean
-        default: true
+    # Run this workflow against a version tag to publish that release.
 
 permissions:
   contents: write
@@ -28,6 +23,7 @@ jobs:
   # 1. Build macOS (.dmg) and Windows (.exe, .msi) Binaries
   # ─────────────────────────────────────────────────────────────
   build-tauri:
+    if: startsWith(github.ref, 'refs/tags/v')
     strategy:
       fail-fast: false
       matrix:
@@ -75,15 +71,9 @@ jobs:
           releaseBody: |
             ### Connex Release ${{ github.ref_name }}
             
-            #### Downloads
-            - **macOS (Apple Silicon)**: `Connex_${{ github.ref_name }}_aarch64.dmg`
-            - **Windows (64-bit)**: `Connex_${{ github.ref_name }}_x64-setup.exe` (or `.msi`)
-            
-            #### Features
-            - **Native Screen-Sharing Invisibility**: Excluded from Zoom, Google Meet, Teams, and OBS.
-            - **Direct WebRTC P2P**: Ultra-low latency 30 FPS display streaming.
-            - **Full Remote Input**: Mouse and keyboard injection.
-            - **End-to-End Encrypted**: P2P DTLS-SRTP encryption.
+            Choose the installer for your platform from the assets below. Windows setup bundles the WebView2 offline installer.
+
+            Connex uses a manual WebRTC offer/reply exchange and requires the host to accept before sharing begins. Screen-capture exclusion is an opt-in setting.
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
@@ -97,14 +87,13 @@ jobs:
             src-tauri/target/**/bundle/dmg/*.dmg
             src-tauri/target/**/bundle/nsis/*.exe
             src-tauri/target/**/bundle/msi/*.msi
-          if-no-files-found: warn
+          if-no-files-found: error
 
   # ─────────────────────────────────────────────────────────────
   # 2. Deploy Landing Page to GitHub Pages
   # ─────────────────────────────────────────────────────────────
   deploy-pages:
-    needs: [build-tauri]
-    if: always()
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

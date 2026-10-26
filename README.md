@@ -1,9 +1,8 @@
 # Connex — Remote Desktop App
 
-A lightweight, fast, ultra-secure remote desktop application built with **Rust + Tauri v2**.  
-Runs natively on **macOS Apple Silicon (ARM64)**, **macOS Intel**, and **Windows 10/11**.
+A remote support desktop app built with **Rust + Tauri v2**, taking its host/connect workflow from tools such as UltraViewer.
 
-Connex provides UltraViewer-style remote desktop functionality with **native screen-sharing invisibility**: while sharing your screen on Google Meet, Zoom, Microsoft Teams, Slack, or OBS, Connex is completely excluded from the video capture.
+Connex currently uses a manual WebRTC offer/reply exchange: the host shares an encoded session payload, and the controller returns an encoded reply. It does not yet connect using only a partner ID and password; that flow requires a deployed signaling service.
 
 ---
 
@@ -11,12 +10,47 @@ Connex provides UltraViewer-style remote desktop functionality with **native scr
 
 | Feature | Details |
 |---|---|
-| **Meeting Window Privacy** | Keeps remote session window private during screen shares (Zoom, Meet, Teams, Slack) |
-| **Device ID & Passcode** | 6-digit Device ID + rotatable 6-digit passcode for consent-based access |
-| **Direct P2P WebRTC** | Direct peer-to-peer display streaming at 30 FPS |
-| **Remote Control** | Low-latency mouse movement, click, scroll, and keystroke injection |
-| **End-to-End Encrypted** | Encrypted with DTLS-SRTP — no central server relaying your desktop frames |
-| **Ultra Lightweight** | Built in Rust. Tiny memory footprint (<30MB RAM) and instant launch |
+| **Host and controller** | 6-digit device ID and rotatable passcode, with host approval before capture starts |
+| **Screen sharing** | Peer-to-peer WebRTC stream after exchanging offer and reply payloads |
+| **Remote control** | Mouse, scroll, and keyboard input over a WebRTC data channel |
+| **Session chat** | Peer-to-peer text chat while connected |
+| **File handoff** | Explicitly selected files up to 2 MB, sent over the encrypted session and saved by the receiver |
+| **Display and quality** | Choose a monitor and data-saver, balanced, or high JPEG quality before sharing |
+| **Stealth option** | Explicit opt-in exclusion of the Connex window from supported capture APIs; Connex stays visible and usable locally |
+| **Recovery feedback** | Connected, reconnecting, and failed peer state are surfaced, with guidance to create a fresh payload after failure |
+| **Windows setup** | NSIS and MSI installers include the WebView2 offline installer |
+
+The current connection setup requires both users to exchange payloads manually. Connex uses STUN for direct peer discovery and does not include a TURN relay, so some firewall and NAT combinations will prevent a connection.
+
+## Connection workflows
+
+### Happy flow
+
+1. The host checks the displayed ID and passcode, chooses a display and stream quality, then selects **Start sharing**.
+2. The host copies the offer payload and sends it to the controller through a trusted channel.
+3. The controller enters the host passcode, optionally verifies the ID, pastes the offer, and selects **Connect**.
+4. The controller sends the generated reply payload back to the host.
+5. The host pastes it and selects **Accept & connect**. The app verifies the current passcode, then starts screen capture and remote control.
+6. Either peer can chat, send a file (the receiver chooses **Save file**), or disconnect. The host can stop sharing at any time.
+
+### Negative and recovery flows
+
+- **Malformed offer/reply or wrong ID:** the app rejects the payload and shows a corrective message. The host can regenerate the offer.
+- **Incorrect or rotated passcode:** the answer is rejected; the host shares the current passcode and a fresh offer.
+- **No ICE gathering / slow network:** session preparation times out with a network hint. Retry on a stable network.
+- **Firewall/NAT blocks direct WebRTC:** the peer state reports failure; Connex currently has no TURN relay, so the peers may need a different network.
+- **Connection drops:** the app reports reconnecting or connection lost. A failed session should be stopped and restarted with a fresh offer/reply exchange.
+- **Capture/display unavailable:** capture reports an error and the host must select an available display and start a new share.
+- **File is over 2 MB:** the app refuses it before transfer. Incoming files are only written to disk when the receiver chooses **Save file**.
+- **Stealth unsupported or OS refuses the setting:** the app disables it on unsupported platforms or reports the native error; it never enables itself silently.
+
+## Enhancements still requiring external setup
+
+- **Direct ID + passcode connection:** requires a deployed signaling service with authenticated device registration, short-lived session codes, rate limits, and abuse controls. The current six-digit ID is not globally registered and must not be treated as a unique public routing address.
+- **Reliable connections across restrictive networks:** requires TURN relay infrastructure, credentials, and operational monitoring.
+- **Signed installers and macOS notarization:** require Windows code-signing certificate secrets and Apple Developer signing/notarization credentials. The current release job builds unsigned packages.
+- **Unattended access:** intentionally remains out of scope for this build. Supporting it safely needs an explicit opt-in policy, OS-protected credential storage, visible service/activity controls, and a revocation path.
+- **Large file transfer, clipboard sync, multi-monitor viewing, and adaptive bitrate:** not included; file handoff is currently limited to 2 MB and one selected monitor per share.
 
 ---
 
@@ -24,9 +58,10 @@ Connex provides UltraViewer-style remote desktop functionality with **native scr
 
 - **GitHub Pages**: [https://gurukannan22.github.io/connex-app/](https://gurukannan22.github.io/connex-app/)
 - **Downloads Available**:
-  - macOS (Apple Silicon): `Connex_aarch64.dmg`
-  - macOS (Intel): `Connex_x64.dmg`
-  - Windows: `Connex_x64-setup.exe` & `Connex_x64.msi`
+  - macOS (Apple Silicon): DMG
+  - Windows (x64): NSIS EXE and MSI
+
+The release workflow does not currently build Intel macOS or Linux packages.
 
 ---
 
@@ -111,7 +146,7 @@ git push origin v0.1.0
 GitHub Actions will:
 1. Matrix build macOS Apple Silicon (`.dmg`) and Windows 64-bit (`.exe` installer + `.msi`).
 2. Publish an official GitHub Release with the binaries attached.
-3. Deploy the modern landing page to GitHub Pages with auto-detected download links.
+3. Deploy the landing page to GitHub Pages from pushes to `main`.
 
 ---
 

@@ -4,8 +4,8 @@
 
 use connex_lib::core::session::{Role, Session};
 use connex_lib::core::signaling::{
-    apply_answer, create_answer, create_offer, decode_payload, encode_payload,
-    encode_payload_with_passcode,
+    apply_answer, create_answer, create_offer, decode_payload, encode_payload_for_device,
+    encode_payload_with_passcode, verify_answer_passcode,
 };
 use connex_lib::core::webrtc_peer::{create_host_channels, create_peer_connection};
 
@@ -25,8 +25,12 @@ async fn test_full_p2p_signaling_handshake() {
 
     // Host generates Offer & Encodes to Base64 payload
     let offer = create_offer(&host_peer).await.expect("Host create offer");
-    let host_payload = encode_payload(&offer, vec!["mock-candidate-1".to_string()])
-        .expect("Encode host payload");
+    let host_payload = encode_payload_for_device(
+        &offer,
+        vec!["mock-candidate-1".to_string()],
+        "592104".to_string(),
+    )
+    .expect("Encode host payload");
 
     assert!(!host_payload.is_empty());
 
@@ -39,7 +43,9 @@ async fn test_full_p2p_signaling_handshake() {
     let ctrl_session = Session::new_controller("714839".to_string());
     assert_eq!(ctrl_session.role, Role::Controller);
 
-    let ctrl_peer = create_peer_connection().await.expect("Controller peer creation");
+    let ctrl_peer = create_peer_connection()
+        .await
+        .expect("Controller peer creation");
     let answer = create_answer(&ctrl_peer, &decoded_host_signal.sdp)
         .await
         .expect("Controller create answer");
@@ -49,12 +55,14 @@ async fn test_full_p2p_signaling_handshake() {
         &answer,
         vec!["mock-ctrl-candidate".to_string()],
         passcode.to_string(),
+        decoded_host_signal.device_id.clone(),
     )
     .expect("Encode controller answer payload");
 
     // 3. Host receives Answer and verifies Passcode
     let decoded_answer = decode_payload(&answer_payload).expect("Decode controller answer");
-    assert_eq!(decoded_answer.passcode, passcode);
+    assert!(decoded_answer.passcode.is_empty());
+    assert!(verify_answer_passcode(&decoded_answer, passcode, "592104").unwrap());
     assert_eq!(decoded_answer.candidates.len(), 1);
 
     // Host applies remote answer description
@@ -76,5 +84,8 @@ fn test_passcode_mismatch_detection() {
     let encoded = B64.encode(fake_answer_payload.as_bytes());
 
     let decoded = decode_payload(&encoded).expect("Decode should succeed");
-    assert_ne!(decoded.passcode, host_passcode, "Mismatched passcodes must not equal");
+    assert_ne!(
+        decoded.passcode, host_passcode,
+        "Mismatched passcodes must not equal"
+    );
 }

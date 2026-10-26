@@ -21,7 +21,9 @@ use base64::engine::general_purpose::{
     STANDARD, STANDARD_NO_PAD, URL_SAFE, URL_SAFE_NO_PAD as B64,
 };
 use base64::Engine;
+use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
+use sha2::Sha256;
 use std::sync::Arc;
 use webrtc::peer_connection::sdp::session_description::RTCSessionDescription;
 use webrtc::peer_connection::RTCPeerConnection;
@@ -31,15 +33,38 @@ use webrtc::peer_connection::RTCPeerConnection;
 pub struct SignalPayload {
     pub sdp: String,             // SDP offer or answer
     pub candidates: Vec<String>, // serialized ICE candidates
+    /// Host identity bound to the offer; empty for older payloads and answers.
+    #[serde(default)]
+    pub device_id: String,
     /// Passcode the controller entered (present on the controller's answer
     /// so the host can verify it before accepting). Empty on the host offer.
     #[serde(default)]
     pub passcode: String,
+    /// HMAC-SHA256 proof that the controller knows the host passcode.
+    #[serde(default)]
+    pub passcode_proof: String,
 }
 
 /// Serialize an SDP to a compact base64 string for display to user
 pub fn encode_payload(sdp: &RTCSessionDescription, candidates: Vec<String>) -> Result<String> {
-    encode_payload_with_passcode(sdp, candidates, String::new())
+    encode_payload_for_device(sdp, candidates, String::new())
+}
+
+/// Serialize an offer bound to the host's device ID.
+pub fn encode_payload_for_device(
+    sdp: &RTCSessionDescription,
+    candidates: Vec<String>,
+    device_id: String,
+) -> Result<String> {
+    let payload = SignalPayload {
+        sdp: sdp.sdp.clone(),
+        candidates,
+        device_id,
+        passcode: String::new(),
+        passcode_proof: String::new(),
+    };
+    let json = serde_json::to_string(&payload)?;
+    Ok(B64.encode(json.as_bytes()))
 }
 
 /// Serialize an SDP + passcode to a compact base64 string
@@ -47,14 +72,44 @@ pub fn encode_payload_with_passcode(
     sdp: &RTCSessionDescription,
     candidates: Vec<String>,
     passcode: String,
+    device_id: String,
 ) -> Result<String> {
+    let auth_data = answer_auth_data(&sdp.sdp, &candidates, &device_id)?;
+    let mut mac = Hmac::<Sha256>::new_from_slice(passcode.as_bytes())
+        .map_err(|_| anyhow::anyhow!("Invalid passcode key"))?;
+    mac.update(&auth_data);
+    let proof = B64.encode(mac.finalize().into_bytes());
     let payload = SignalPayload {
         sdp: sdp.sdp.clone(),
         candidates,
-        passcode,
+        device_id,
+        // Do not put the secret itself in the exchange payload.
+        passcode: String::new(),
+        passcode_proof: proof,
     };
     let json = serde_json::to_string(&payload)?;
     Ok(B64.encode(json.as_bytes()))
+}
+
+fn answer_auth_data(sdp: &str, candidates: &[String], device_id: &str) -> Result<Vec<u8>> {
+    Ok(serde_json::to_vec(&(device_id, sdp, candidates))?)
+}
+
+/// Verify the controller's proof without exposing the passcode in the reply payload.
+pub fn verify_answer_passcode(
+    payload: &SignalPayload,
+    passcode: &str,
+    expected_device_id: &str,
+) -> Result<bool> {
+    if payload.device_id != expected_device_id || payload.passcode_proof.is_empty() {
+        return Ok(false);
+    }
+    let proof = B64.decode(&payload.passcode_proof)?;
+    let auth_data = answer_auth_data(&payload.sdp, &payload.candidates, &payload.device_id)?;
+    let mut mac = Hmac::<Sha256>::new_from_slice(passcode.as_bytes())
+        .map_err(|_| anyhow::anyhow!("Invalid passcode key"))?;
+    mac.update(&auth_data);
+    Ok(mac.verify_slice(&proof).is_ok())
 }
 
 /// Decode a base64 payload string back into SignalPayload, resilient to whitespace/line breaks
@@ -89,10 +144,7 @@ pub async fn create_answer(
 }
 
 /// Apply remote answer (HOST calls after receiving controller's answer)
-pub async fn apply_answer(
-    peer: &Arc<RTCPeerConnection>,
-    answer_sdp: &str,
-) -> Result<()> {
+pub async fn apply_answer(peer: &Arc<RTCPeerConnection>, answer_sdp: &str) -> Result<()> {
     let answer = RTCSessionDescription::answer(answer_sdp.to_string())?;
     peer.set_remote_description(answer).await?;
     Ok(())
@@ -107,7 +159,9 @@ mod tests {
         let payload = SignalPayload {
             sdp: "v=0\r\no=- 123456 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\n".to_string(),
             candidates: vec!["candidate:1 1 UDP 2130706431 192.168.1.5 5000 typ host".to_string()],
+            device_id: String::new(),
             passcode: "849201".to_string(),
+            passcode_proof: String::new(),
         };
 
         let json = serde_json::to_string(&payload).unwrap();
@@ -124,7 +178,9 @@ mod tests {
         let payload = SignalPayload {
             sdp: "v=0\r\ntest\r\n".to_string(),
             candidates: vec![],
+            device_id: String::new(),
             passcode: "123456".to_string(),
+            passcode_proof: String::new(),
         };
 
         let json = serde_json::to_string(&payload).unwrap();
@@ -132,7 +188,8 @@ mod tests {
 
         // Simulate multi-line email/chat copy-paste with spaces and line breaks
         let corrupted_spacing = format!("  \n  {} \r\n  ", encoded);
-        let decoded = decode_payload(&corrupted_spacing).expect("Should clean whitespace and decode");
+        let decoded =
+            decode_payload(&corrupted_spacing).expect("Should clean whitespace and decode");
         assert_eq!(decoded.passcode, "123456");
         assert_eq!(decoded.sdp, "v=0\r\ntest\r\n");
     }
@@ -151,7 +208,8 @@ mod tests {
         // Old payload format without passcode field
         let json_no_passcode = r#"{"sdp":"test-sdp","candidates":[]}"#;
         let encoded = B64.encode(json_no_passcode.as_bytes());
-        let decoded = decode_payload(&encoded).expect("Should deserialize with default empty passcode");
+        let decoded =
+            decode_payload(&encoded).expect("Should deserialize with default empty passcode");
         assert_eq!(decoded.passcode, "");
         assert_eq!(decoded.sdp, "test-sdp");
     }
@@ -161,7 +219,9 @@ mod tests {
         let payload = SignalPayload {
             sdp: "v=0\r\no=alice 1000 2000 IN IP4 10.0.0.1\r\n".to_string(),
             candidates: vec!["candidate:foo.bar?query=1&param=2".to_string()],
+            device_id: String::new(),
             passcode: "654321".to_string(),
+            passcode_proof: String::new(),
         };
         let json = serde_json::to_string(&payload).unwrap();
 
@@ -190,13 +250,16 @@ mod tests {
     fn test_multiple_ice_candidates() {
         let candidates = vec![
             "candidate:1 1 UDP 2130706431 192.168.1.1 5000 typ host".to_string(),
-            "candidate:2 1 UDP 1694498815 10.0.0.2 5001 typ srflx raddr 192.168.1.1 rport 5000".to_string(),
+            "candidate:2 1 UDP 1694498815 10.0.0.2 5001 typ srflx raddr 192.168.1.1 rport 5000"
+                .to_string(),
             "candidate:3 1 TCP 1518280447 192.168.1.1 9 typ host tcptype active".to_string(),
         ];
         let payload = SignalPayload {
             sdp: "v=0\r\ns=-\r\n".to_string(),
             candidates: candidates.clone(),
+            device_id: String::new(),
             passcode: "112233".to_string(),
+            passcode_proof: String::new(),
         };
         let json = serde_json::to_string(&payload).unwrap();
         let encoded = B64.encode(json.as_bytes());

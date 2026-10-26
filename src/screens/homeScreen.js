@@ -37,6 +37,17 @@ export function renderHomeScreen() {
                 <button class="btn btn-ghost btn-sm" id="btn-rotate-passcode">${icon("refresh", "icon icon-sm")} New passcode</button>
               </div>
 
+              <div class="field stream-quality">
+                <label class="label" for="stream-display">Display</label>
+                <select class="input" id="stream-display"><option value="0">Display 1</option></select>
+                <label class="label" for="stream-quality">Stream quality</label>
+                <select class="input" id="stream-quality">
+                  <option value="55">Data saver</option>
+                  <option value="75" selected>Balanced</option>
+                  <option value="90">High quality</option>
+                </select>
+              </div>
+
               <button class="btn btn-primary btn-lg btn-block" id="btn-share-start">${icon("share", "icon icon-sm")} Start sharing</button>
 
               <div class="collapse" id="share-collapse">
@@ -57,6 +68,17 @@ export function renderHomeScreen() {
                   <button class="btn btn-primary btn-sm" id="btn-host-apply-answer">Accept &amp; connect</button>
                 </div>
                 <span class="flow-status" id="share-status"><span class="dot"></span>Idle</span>
+                <div class="host-chat-block">
+                  <div class="label">Session chat and file handoff</div>
+                  <div class="chat-messages" id="host-chat-messages" aria-live="polite"></div>
+                  <form class="chat-compose chat-form">
+                    <input class="input chat-input" maxlength="2000" placeholder="Write a message…" autocomplete="off" />
+                    <button class="btn btn-sm chat-file-button" type="button" title="Send a file up to 2 MB">File</button>
+                    <button class="btn btn-primary btn-sm" type="submit">Send</button>
+                  </form>
+                  <input class="chat-file-input" type="file" hidden />
+                </div>
+                <button class="btn btn-danger btn-sm" id="btn-share-stop" type="button" hidden>Stop session</button>
               </div>
             </section>
 
@@ -91,6 +113,7 @@ export function renderHomeScreen() {
                   <button class="btn btn-ghost btn-sm" id="btn-ctrl-copy-answer">${icon("copy", "icon icon-sm")} Copy reply</button>
                 </div>
                 <span class="flow-status is-waiting"><span class="dot"></span>Waiting for them to accept…</span>
+                <button class="btn btn-danger btn-sm" id="btn-ctrl-cancel" type="button">Cancel connection</button>
               </div>
 
               <div class="recent" id="recent-wrap">

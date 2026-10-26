@@ -8,12 +8,13 @@ const GITHUB_REPO = "gurukannan22/connex-app";
 const RELEASES_API = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
 const LATEST_RELEASE_URL = `https://github.com/gurukannan22/connex-app/releases/latest`;
 
-// Direct fallback download links matching Tauri v2 default bundle naming
+// If the releases API is unavailable, send users to the release page so they
+// can choose a real asset instead of following a guessed, often stale filename.
 const FALLBACK_DOWNLOADS = {
-  macSilicon: `${LATEST_RELEASE_URL}/download/Connex_aarch64.dmg`,
-  macIntel:   `${LATEST_RELEASE_URL}/download/Connex_x64.dmg`,
-  winExe:     `${LATEST_RELEASE_URL}/download/Connex_x64-setup.exe`,
-  winMsi:     `${LATEST_RELEASE_URL}/download/Connex_x64_en-US.msi`,
+  macSilicon: LATEST_RELEASE_URL,
+  macIntel: LATEST_RELEASE_URL,
+  winExe: LATEST_RELEASE_URL,
+  winMsi: LATEST_RELEASE_URL,
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -192,10 +193,11 @@ async function fetchLatestRelease() {
     });
 
     // Fallbacks for any missing specific asset
-    if (!foundArm) linkMacArm.href = `${LATEST_RELEASE_URL}/download/Connex_${tag}_aarch64.dmg`;
-    if (!foundIntel) linkMacIntel.href = `${LATEST_RELEASE_URL}/download/Connex_${tag}_x64.dmg`;
-    if (!foundExe) linkWinExe.href = `${LATEST_RELEASE_URL}/download/Connex_${tag}_x64-setup.exe`;
-    if (!foundMsi) linkWinMsi.href = `${LATEST_RELEASE_URL}/download/Connex_${tag}_x64_en-US.msi`;
+    const releasePage = data.html_url || LATEST_RELEASE_URL;
+    if (!foundArm) linkMacArm.href = releasePage;
+    if (!foundIntel) linkMacIntel.href = releasePage;
+    if (!foundExe) linkWinExe.href = releasePage;
+    if (!foundMsi) linkWinMsi.href = releasePage;
 
     // Also update hero primary download button URL
     const detected = detectOS();
@@ -215,4 +217,10 @@ function applyDefaultLinks() {
   document.getElementById("link-mac-intel").href = FALLBACK_DOWNLOADS.macIntel;
   document.getElementById("link-win-exe").href = FALLBACK_DOWNLOADS.winExe;
   document.getElementById("link-win-msi").href = FALLBACK_DOWNLOADS.winMsi;
+  const cta = document.getElementById("btn-primary-dl");
+  const label = document.getElementById("cta-label");
+  const sub = document.getElementById("cta-sub");
+  if (cta) cta.href = LATEST_RELEASE_URL;
+  if (label) label.textContent = "View latest downloads";
+  if (sub) sub.textContent = "Choose an installer from GitHub Releases";
 }

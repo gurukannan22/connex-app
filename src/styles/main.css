@@ -26,6 +26,7 @@
   --danger: #d4443e;
   --danger-soft: #f8e9e8;
   --warning: #b5750e;
+  --warning-soft: #fbf2df;
 
   --r:    8px;
   --r-lg: 13px;
@@ -58,6 +59,7 @@
     --danger: #f0706c;
     --danger-soft: rgba(240,112,108,0.14);
     --warning: #e0a23c;
+    --warning-soft: rgba(224,162,60,0.14);
 
     --sh: none;
   }
@@ -99,6 +101,9 @@ svg { display: block; }
   border-bottom: 1px solid var(--border);
   background: var(--surface);
 }
+.topbar-tools { display: flex; align-items: center; gap: 16px; }
+.btn-stealth { color: var(--text-2); }
+.btn-stealth.is-enabled { background: var(--warning-soft); color: var(--warning); }
 .brand { display: flex; align-items: center; gap: 9px; }
 .brand-app-icon { width: 24px; height: 24px; border-radius: 6px; object-fit: contain; }
 .brand-mark { width: 26px; height: 26px; border-radius: 7px; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; }
@@ -108,6 +113,7 @@ svg { display: block; }
 .top-status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-3); }
 .top-status.is-online .dot { background: var(--online); }
 .top-status.is-waiting .dot { background: var(--warning); }
+.top-status.is-error .dot { background: var(--danger); }
 
 /* ── Screens ───────────────────────────────────────────────── */
 .screen { display: none; min-height: 0; }
@@ -207,6 +213,8 @@ textarea.input { resize: none; line-height: 1.5; }
   cursor: pointer; white-space: nowrap; user-select: none;
   transition: background 0.14s, border-color 0.14s, color 0.14s, opacity 0.14s;
 }
+
+.btn[hidden] { display: none; }
 .btn:active { transform: translateY(0.5px); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn-primary { background: var(--solid); color: var(--on-solid); }
@@ -241,6 +249,7 @@ textarea.input { resize: none; line-height: 1.5; }
 .flow-status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-3); }
 .flow-status.is-online .dot { background: var(--online); }
 .flow-status.is-waiting .dot { background: var(--warning); animation: blink 1.4s ease-in-out infinite; }
+.flow-status.is-error .dot { background: var(--danger); }
 @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 
 /* ── Recent ────────────────────────────────────────────────── */
@@ -275,6 +284,16 @@ textarea.input { resize: none; line-height: 1.5; }
 .remote-toolbar .btn-danger { background: rgba(212,68,62,0.18); border-color: transparent; color: #fca5a5; }
 .remote-canvas-wrap { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
 #remote-canvas { max-width: 100%; max-height: 100%; object-fit: contain; cursor: none; }
+.chat-panel { position: absolute; z-index: 4; right: 18px; bottom: 18px; width: min(340px, calc(100vw - 36px)); max-height: 42vh; display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid rgba(255,255,255,.14); border-radius: 14px; background: rgba(18,20,27,.94); color: #f4f4f5; box-shadow: 0 12px 38px rgba(0,0,0,.35); }
+.chat-heading { font-size: .84rem; font-weight: 650; }
+.chat-heading span { display: block; margin-top: 3px; color: #a1a1aa; font-size: .7rem; font-weight: 400; }
+.chat-messages { min-height: 52px; max-height: 180px; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
+.chat-message { max-width: 90%; padding: 7px 10px; border-radius: 10px 10px 10px 3px; background: rgba(255,255,255,.1); font-size: .8rem; overflow-wrap: anywhere; white-space: pre-wrap; }
+.chat-message.is-outgoing { align-self: flex-end; border-radius: 10px 10px 3px 10px; background: #315ce8; }
+.file-received a { color: #bfdbfe; text-decoration: underline; }
+.host-chat-block { margin-top: 14px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); }
+.chat-compose { display: flex; gap: 7px; }
+.chat-compose .input { min-width: 0; flex: 1; }
 .custom-cursor {
   position: absolute; width: 14px; height: 14px; border-radius: 50%;
   background: rgba(255,255,255,0.75); border: 2px solid rgba(0,0,0,0.4);

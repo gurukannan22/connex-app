@@ -22,6 +22,15 @@ export async function rotatePasscode() {
 }
 
 /**
+ * Toggle exclusion of the Connex window from supported screen captures.
+ * @param {boolean} enabled
+ * @returns {Promise<void>}
+ */
+export async function setStealthMode(enabled) {
+  return await invoke("set_stealth_mode", { enabled });
+}
+
+/**
  * Host initiates a WebRTC sharing session
  * @returns {Promise<string>} Base64 SDP offer payload
  */
@@ -53,8 +62,12 @@ export async function controllerJoinSession(hostPayload, passcode, deviceId = ""
  * Start screen capture streaming
  * @returns {Promise<void>}
  */
-export async function startCapture() {
-  return await invoke("start_capture");
+export async function startCapture(quality = 75, displayIndex = 0) {
+  return await invoke("start_capture", { quality, displayIndex });
+}
+
+export async function listDisplays() {
+  return await invoke("list_displays");
 }
 
 /**
@@ -63,6 +76,11 @@ export async function startCapture() {
  */
 export async function stopCapture() {
   return await invoke("stop_capture");
+}
+
+/** Send an in-session chat message. */
+export async function sendChatMessage(message) {
+  return await invoke("send_chat_message", { message });
 }
 
 /**

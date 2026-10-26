@@ -17,20 +17,44 @@ use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
 
 pub const TARGET_FPS: u64 = 30;
-const JPEG_QUALITY: u8 = 75; // balance quality vs bandwidth
+pub const DEFAULT_JPEG_QUALITY: u8 = 75; // balance quality vs bandwidth
 
 /// A screen frame encoded as base64 JPEG
 pub type FrameB64 = String;
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct DisplayInfo {
+    pub index: usize,
+    pub width: usize,
+    pub height: usize,
+}
+
+pub fn displays() -> Result<Vec<DisplayInfo>> {
+    Ok(Display::all()?
+        .into_iter()
+        .enumerate()
+        .map(|(index, display)| DisplayInfo {
+            index,
+            width: display.width(),
+            height: display.height(),
+        })
+        .collect())
+}
 
 /// Start capturing the primary display.
 /// Returns a receiver channel for frames and a stop signal.
 pub fn start_capture(
     stop_signal: Arc<AtomicBool>,
+    quality: u8,
+    display_index: usize,
 ) -> Result<mpsc::Receiver<FrameB64>> {
     let (tx, rx) = mpsc::channel::<FrameB64>(4); // small buffer to avoid lag
 
     // Get primary display
-    let display = Display::primary().context("No primary display found")?;
+    let display = Display::all()?
+        .into_iter()
+        .nth(display_index)
+        .context("Selected display is no longer available")?;
     let width = display.width();
     let height = display.height();
     info!("[capture] Display {}×{} @ {}fps", width, height, TARGET_FPS);
@@ -79,7 +103,7 @@ pub fn start_capture(
                     }
 
                     // Encode to JPEG
-                    if let Some(b64) = encode_jpeg(&rgb, width as u32, height as u32) {
+                    if let Some(b64) = encode_jpeg(&rgb, width as u32, height as u32, quality) {
                         if tx.try_send(b64).is_err() {
                             // Receiver full or dropped — skip frame (no lag accumulation)
                         }
@@ -101,12 +125,13 @@ pub fn start_capture(
 }
 
 /// Encode raw RGB bytes to base64-encoded JPEG string
-fn encode_jpeg(rgb: &[u8], width: u32, height: u32) -> Option<FrameB64> {
+fn encode_jpeg(rgb: &[u8], width: u32, height: u32, quality: u8) -> Option<FrameB64> {
     if width == 0 || height == 0 || rgb.len() != (width as usize * height as usize * 3) {
         return None;
     }
     let mut buf = Cursor::new(Vec::new());
-    let mut encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut buf, JPEG_QUALITY);
+    let mut encoder =
+        image::codecs::jpeg::JpegEncoder::new_with_quality(&mut buf, quality.clamp(30, 95));
     encoder
         .encode(rgb, width, height, image::ExtendedColorType::Rgb8)
         .ok()?;
@@ -116,7 +141,14 @@ fn encode_jpeg(rgb: &[u8], width: u32, height: u32) -> Option<FrameB64> {
 
 /// Returns (width, height) of the primary display
 pub fn display_size() -> Result<(usize, usize)> {
-    let display = Display::primary().context("No primary display")?;
+    display_size_for(0)
+}
+
+pub fn display_size_for(index: usize) -> Result<(usize, usize)> {
+    let display = Display::all()?
+        .into_iter()
+        .nth(index)
+        .context("Selected display is no longer available")?;
     Ok((display.width(), display.height()))
 }
 
@@ -130,13 +162,13 @@ mod tests {
         let width = 2;
         let height = 2;
         let rgb = vec![
-            255, 0, 0,    // Red
-            0, 255, 0,    // Green
-            0, 0, 255,    // Blue
-            255, 255, 255 // White
+            255, 0, 0, // Red
+            0, 255, 0, // Green
+            0, 0, 255, // Blue
+            255, 255, 255, // White
         ];
 
-        let encoded = encode_jpeg(&rgb, width, height);
+        let encoded = encode_jpeg(&rgb, width, height, DEFAULT_JPEG_QUALITY);
         assert!(encoded.is_some(), "JPEG encoding of valid RGB must succeed");
         let b64 = encoded.unwrap();
         assert!(!b64.is_empty());
@@ -152,16 +184,17 @@ mod tests {
     fn test_encode_jpeg_invalid_dimensions() {
         let rgb = vec![255, 0, 0];
         // 0 dimensions should safely return None without panicking
-        assert!(encode_jpeg(&rgb, 0, 1).is_none());
-        assert!(encode_jpeg(&rgb, 1, 0).is_none());
+        assert!(encode_jpeg(&rgb, 0, 1, DEFAULT_JPEG_QUALITY).is_none());
+        assert!(encode_jpeg(&rgb, 1, 0, DEFAULT_JPEG_QUALITY).is_none());
         // Dimension mismatch should safely return None
-        assert!(encode_jpeg(&rgb, 2, 2).is_none());
+        assert!(encode_jpeg(&rgb, 2, 2, DEFAULT_JPEG_QUALITY).is_none());
     }
 
     #[test]
     fn test_encode_jpeg_magic_bytes() {
         let rgb = vec![128, 128, 128]; // 1x1 pixel
-        let encoded = encode_jpeg(&rgb, 1, 1).expect("1x1 encoding must succeed");
+        let encoded =
+            encode_jpeg(&rgb, 1, 1, DEFAULT_JPEG_QUALITY).expect("1x1 encoding must succeed");
         let bytes = B64.decode(&encoded).expect("Decode base64");
 
         // JPEG standard Start of Image (SOI) is 0xFF, 0xD8
@@ -178,7 +211,8 @@ mod tests {
     fn test_encode_jpeg_various_dimensions() {
         // Odd dimensions: 3 width x 5 height = 15 pixels = 45 bytes
         let rgb = vec![100u8; 3 * 5 * 3];
-        let encoded = encode_jpeg(&rgb, 3, 5).expect("Odd dimension encoding must succeed");
+        let encoded = encode_jpeg(&rgb, 3, 5, DEFAULT_JPEG_QUALITY)
+            .expect("Odd dimension encoding must succeed");
         let bytes = B64.decode(&encoded).unwrap();
         let img = image::load_from_memory(&bytes).unwrap();
         assert_eq!(img.width(), 3);
@@ -193,10 +227,10 @@ mod tests {
 
         // One byte short
         let too_short = vec![0u8; expected_len - 1];
-        assert!(encode_jpeg(&too_short, width, height).is_none());
+        assert!(encode_jpeg(&too_short, width, height, DEFAULT_JPEG_QUALITY).is_none());
 
         // One byte extra
         let too_long = vec![0u8; expected_len + 1];
-        assert!(encode_jpeg(&too_long, width, height).is_none());
+        assert!(encode_jpeg(&too_long, width, height, DEFAULT_JPEG_QUALITY).is_none());
     }
 }

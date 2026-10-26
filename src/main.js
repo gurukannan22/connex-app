@@ -11,11 +11,14 @@ import { getRecent, saveRecent } from "./services/storage.js";
 import {
   getDeviceIdentity,
   rotatePasscode,
+  setStealthMode,
   hostCreateSession,
   hostApplyAnswer,
   controllerJoinSession,
   startCapture,
   stopCapture,
+  sendChatMessage,
+  listDisplays,
 } from "./services/tauri.js";
 import { renderHomeScreen } from "./screens/homeScreen.js";
 import { renderRemoteScreen } from "./screens/remoteScreen.js";
@@ -28,7 +31,10 @@ const state = {
   identity: null,
   connected: false,
   sharing: false,
+  connectionTimer: null,
+  stealthEnabled: false,
 };
+const incomingFiles = new Map();
 
 const $ = (id) => document.getElementById(id);
 
@@ -43,7 +49,13 @@ function buildAppHTML() {
         <img src="/connex-logo.png" class="brand-app-icon" alt="Connex" />
         <span class="brand-name">Connex</span>
       </div>
-      <span class="top-status" id="global-status"><span class="dot"></span>Ready</span>
+      <div class="topbar-tools">
+        <button class="btn btn-ghost btn-sm btn-stealth" id="btn-stealth" type="button" aria-pressed="false"
+          title="Exclude only the Connex window from supported screen captures. Connex stays visible and controllable locally.">
+          ${icon("lock", "icon icon-sm")}<span id="stealth-label">Stealth off</span>
+        </button>
+        <span class="top-status" id="global-status" aria-live="polite"><span class="dot"></span>Ready</span>
+      </div>
     </header>
 
     ${renderHomeScreen()}
@@ -71,6 +83,38 @@ function setGlobalStatus(label, kind = "") {
   el.className = `top-status ${kind}`;
   el.innerHTML = `<span class="dot"></span>${label}`;
 }
+
+const stealthButton = $("btn-stealth");
+const stealthSupported = /Windows|Macintosh|Mac OS X/i.test(navigator.userAgent)
+  || /Win|Mac/i.test(navigator.platform || "");
+if (stealthButton && !stealthSupported) {
+  stealthButton.disabled = true;
+  stealthButton.title = "Screen-capture exclusion is available on Windows and macOS.";
+}
+
+$("btn-stealth")?.addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  const next = !state.stealthEnabled;
+  button.disabled = true;
+  try {
+    await setStealthMode(next);
+    state.stealthEnabled = next;
+    button.setAttribute("aria-pressed", String(next));
+    button.classList.toggle("is-enabled", next);
+    $("stealth-label").textContent = next ? "Stealth on" : "Stealth off";
+    showToast(
+      next
+        ? "Stealth is on. Connex remains visible locally; supported screen captures may omit its window."
+        : "Stealth is off. Connex can appear in screen captures.",
+      "info",
+      5000,
+    );
+  } catch (err) {
+    showToast(`Couldn't change stealth mode: ${err}`, "error");
+  } finally {
+    button.disabled = false;
+  }
+});
 
 // ─────────────────────────────────────────────────────────────
 // Identity Management
@@ -116,8 +160,40 @@ function flashCopied(btn, labelHTML) {
   }, 1100);
 }
 
-function copyText(text) {
-  navigator.clipboard.writeText(text).catch(() => {});
+async function copyText(text) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // Fall through to the WebView-compatible copy method.
+  }
+
+  const field = document.createElement("textarea");
+  field.value = text;
+  field.setAttribute("readonly", "");
+  field.style.position = "fixed";
+  field.style.opacity = "0";
+  document.body.appendChild(field);
+  field.select();
+  let copied = false;
+  try {
+    copied = document.execCommand("copy");
+  } catch {
+    copied = false;
+  }
+  field.remove();
+  return copied;
+}
+
+async function copyWithFeedback(text, btn) {
+  if (await copyText(text)) {
+    if (btn) flashCopied(btn);
+    else showToast("Copied to clipboard.", "success", 1400);
+    return;
+  }
+  showToast("Couldn't copy automatically. Select and copy the text manually.", "error");
 }
 
 function digitsOnly(el, max = 6) {
@@ -141,8 +217,7 @@ $("btn-copy-identity")?.addEventListener("click", (e) => {
     showToast("Device identity not loaded yet.", "warning");
     return;
   }
-  copyText(`Connex ID ${state.identity.device_id} · passcode ${state.identity.passcode}`);
-  flashCopied(e.currentTarget);
+  copyWithFeedback(`Connex ID ${state.identity.device_id} · passcode ${state.identity.passcode}`, e.currentTarget);
 });
 
 $("btn-rotate-passcode")?.addEventListener("click", async () => {
@@ -159,8 +234,7 @@ $("btn-rotate-passcode")?.addEventListener("click", async () => {
 document.addEventListener("click", (e) => {
   const el = e.target.closest("[data-device-id],[data-passcode]");
   if (!el || !state.identity || el.classList.contains("loading")) return;
-  copyText(el.textContent.trim());
-  showToast("Copied to clipboard.", "success", 1400);
+  copyWithFeedback(el.textContent.trim());
 });
 
 $("btn-share-start")?.addEventListener("click", async () => {
@@ -179,6 +253,7 @@ $("btn-share-start")?.addEventListener("click", async () => {
     $("share-status").className = "flow-status is-waiting";
     $("share-status").innerHTML = `<span class="dot"></span>Waiting for reply`;
     btn.innerHTML = `${icon("refresh", "icon icon-sm")} Restart session`;
+    $("btn-share-stop").hidden = false;
     btn.disabled = false;
     showToast("Share session ready — send your payload.", "success");
   } catch (err) {
@@ -192,8 +267,7 @@ $("btn-share-start")?.addEventListener("click", async () => {
 $("btn-host-copy-payload")?.addEventListener("click", (e) => {
   const v = $("host-payload-box").value;
   if (!v) return showToast("Nothing to copy yet.", "warning");
-  copyText(v);
-  flashCopied(e.currentTarget);
+  copyWithFeedback(v, e.currentTarget);
 });
 
 $("btn-host-apply-answer")?.addEventListener("click", async () => {
@@ -205,19 +279,49 @@ $("btn-host-apply-answer")?.addEventListener("click", async () => {
   setShareStep(3, "active");
   try {
     await hostApplyAnswer(answerPayload);
+  } catch (err) {
+    setShareStep(3, "");
+    $("share-status").className = "flow-status is-error";
+    $("share-status").innerHTML = `<span class="dot"></span>Reply rejected — check the passcode`;
+    showToast(`${err}`, "error");
+    btn.disabled = false;
+    return;
+  }
+
+  try {
+    await startCapture(Number($("stream-quality")?.value || 75), Number($("stream-display")?.value || 0));
     setShareStep(2, "done");
     setShareStep(3, "done");
     $("share-status").className = "flow-status is-online";
     $("share-status").innerHTML = `<span class="dot"></span>Sharing active`;
     setGlobalStatus("Sharing active", "is-online");
-    await startCapture();
     showToast("Connection accepted — your screen is being shared.", "success");
   } catch (err) {
     setShareStep(3, "");
+    $("share-status").className = "flow-status is-error";
+    $("share-status").innerHTML = `<span class="dot"></span>Screen capture failed — start a new session`;
+    await stopCapture().catch(() => {});
+    state.sharing = false;
+    $("btn-share-start").innerHTML = `${icon("share", "icon icon-sm")} Start sharing`;
     showToast(`${err}`, "error");
   } finally {
     btn.disabled = false;
   }
+});
+
+$("btn-share-stop")?.addEventListener("click", async () => {
+  await stopCapture().catch(() => {});
+  state.sharing = false;
+  $("host-payload-box").value = "";
+  $("host-answer-input").value = "";
+  $("share-collapse").classList.remove("open");
+  $("btn-share-start").innerHTML = `${icon("share", "icon icon-sm")} Start sharing`;
+  $("btn-share-stop").hidden = true;
+  $("share-status").className = "flow-status";
+  $("share-status").innerHTML = `<span class="dot"></span>Idle`;
+  [1, 2, 3].forEach((step) => setShareStep(step, ""));
+  setGlobalStatus("Ready");
+  showToast("Sharing session stopped.", "info");
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -225,9 +329,10 @@ $("btn-host-apply-answer")?.addEventListener("click", async () => {
 // ─────────────────────────────────────────────────────────────
 function validateConnectForm() {
   const pass = $("ctrl-passcode")?.value.trim() ?? "";
+  const deviceId = $("ctrl-device-id")?.value.trim() ?? "";
   const pl = $("ctrl-payload-input")?.value.trim() ?? "";
   const btn = $("btn-controller-connect");
-  if (btn) btn.disabled = !(pass.length === 6 && pl.length > 0);
+  if (btn) btn.disabled = !(pass.length === 6 && (!deviceId || deviceId.length === 6) && pl.length > 0);
 }
 
 $("btn-controller-connect")?.addEventListener("click", async () => {
@@ -236,6 +341,7 @@ $("btn-controller-connect")?.addEventListener("click", async () => {
   const hostPayload = $("ctrl-payload-input").value.trim();
 
   if (passcode.length !== 6) return showToast("Enter the 6-digit passcode.", "error");
+  if (deviceId && deviceId.length !== 6) return showToast("Enter all 6 digits of the device ID, or leave it blank.", "error");
   if (!hostPayload) return showToast("Paste the host's payload.", "error");
 
   const btn = $("btn-controller-connect");
@@ -251,6 +357,13 @@ $("btn-controller-connect")?.addEventListener("click", async () => {
     }
     setGlobalStatus("Waiting for host", "is-waiting");
     btn.innerHTML = `${icon("check", "icon icon-sm")} Reply ready`;
+    clearTimeout(state.connectionTimer);
+    state.connectionTimer = setTimeout(() => {
+      if (!state.connected) {
+        setGlobalStatus("No screen yet", "is-waiting");
+        showToast("No screen has arrived yet. Check that the host accepted your reply, or cancel and try again.", "warning", 6000);
+      }
+    }, 45_000);
     showToast("Reply generated — send it back to the host.", "success");
   } catch (err) {
     showToast(`${err}`, "error");
@@ -262,8 +375,20 @@ $("btn-controller-connect")?.addEventListener("click", async () => {
 $("btn-ctrl-copy-answer")?.addEventListener("click", (e) => {
   const v = $("ctrl-answer-box").value;
   if (!v) return;
-  copyText(v);
-  flashCopied(e.currentTarget);
+  copyWithFeedback(v, e.currentTarget);
+});
+
+$("btn-ctrl-cancel")?.addEventListener("click", async () => {
+  await stopCapture().catch(() => {});
+  clearTimeout(state.connectionTimer);
+  state.connectionTimer = null;
+  state.connected = false;
+  $("ctrl-answer-box").value = "";
+  $("connect-collapse").classList.remove("open");
+  $("btn-controller-connect").innerHTML = `Connect ${icon("arrowRight", "icon icon-sm")}`;
+  validateConnectForm();
+  setGlobalStatus("Ready");
+  showToast("Connection cancelled.", "info");
 });
 
 // Keyboard shortcuts for quick connection
@@ -316,13 +441,146 @@ listen("connex://frame", (event) => {
 
   if (!state.connected) {
     state.connected = true;
+    clearTimeout(state.connectionTimer);
+    state.connectionTimer = null;
+    setGlobalStatus("Connected", "is-online");
     showScreen("remote");
     setupCanvasInteractions($("remote-canvas"), $("custom-cursor"), () => state.connected);
   }
 });
 
+listen("connex://chat", (event) => handleSessionMessage(String(event.payload ?? "")));
+
+function handleSessionMessage(message) {
+  if (message.startsWith("CXFILEMETA|")) {
+    const [, id, name, mime, sizeText] = message.split("|");
+    const size = Number(sizeText);
+    if (!/^[\w-]{1,64}$/.test(id || "") || !Number.isInteger(size) || size < 0 || size > 2 * 1024 * 1024) return;
+    if (!incomingFiles.has(id) && incomingFiles.size >= 3) incomingFiles.delete(incomingFiles.keys().next().value);
+    const transfer = incomingFiles.get(id) || { chunks: new Map() };
+    try {
+      transfer.name = decodeURIComponent(name || "file");
+      transfer.mime = decodeURIComponent(mime || "application/octet-stream");
+    } catch { return; }
+    transfer.size = size;
+    incomingFiles.set(id, transfer);
+    finishIncomingFile(id, transfer);
+    return;
+  }
+  if (message.startsWith("CXFILE|")) {
+    const [, id, indexText, totalText, data] = message.split("|");
+    const index = Number(indexText), total = Number(totalText);
+    if (!/^[\w-]{1,64}$/.test(id || "") || !Number.isInteger(index) || !Number.isInteger(total) || total < 1 || total > 1200 || index < 0 || index >= total || data === undefined || data.length > 2600) return;
+    if (!incomingFiles.has(id) && incomingFiles.size >= 3) incomingFiles.delete(incomingFiles.keys().next().value);
+    const transfer = incomingFiles.get(id) || { chunks: new Map() };
+    transfer.total = total;
+    transfer.chunks.set(index, data);
+    incomingFiles.set(id, transfer);
+    finishIncomingFile(id, transfer);
+    return;
+  }
+  appendChatMessage(message, false);
+}
+
+function finishIncomingFile(id, transfer) {
+  if (!transfer.name || !transfer.total || transfer.chunks.size !== transfer.total || transfer.url) return;
+  let binary = "";
+  for (let index = 0; index < transfer.total; index++) {
+    const chunk = transfer.chunks.get(index);
+    if (chunk === undefined) return;
+    binary += atob(chunk);
+  }
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  if (bytes.byteLength !== transfer.size) return;
+  transfer.url = URL.createObjectURL(new Blob([bytes], { type: transfer.mime || "application/octet-stream" }));
+  const row = document.createElement("div");
+  row.className = "chat-message file-received";
+  const label = document.createElement("span");
+  label.textContent = `${transfer.name} (${(transfer.size / 1024).toFixed(0)} KB) · `;
+  const link = document.createElement("a");
+  link.href = transfer.url;
+  link.download = transfer.name;
+  link.textContent = "Save file";
+  row.append(label, link);
+  document.querySelectorAll(".chat-messages").forEach((list) => list.appendChild(row.cloneNode(true)));
+  incomingFiles.delete(id);
+}
+listen("connex://connection-state", (event) => {
+  const connectionState = String(event.payload ?? "");
+  if (connectionState === "connected") {
+    setGlobalStatus("Connected", "is-online");
+  } else if (connectionState === "disconnected") {
+    setGlobalStatus("Reconnecting…", "is-waiting");
+  } else if (connectionState === "failed") {
+    setGlobalStatus("Connection lost", "is-error");
+    showToast("The peer connection failed. Check both networks and reconnect using a fresh payload.", "error", 6500);
+  }
+});
+
+function appendChatMessage(message, outgoing) {
+  if (!message) return;
+  const row = document.createElement("div");
+  row.className = `chat-message${outgoing ? " is-outgoing" : ""}`;
+  row.textContent = message;
+  document.querySelectorAll(".chat-messages").forEach((list) => {
+    list.appendChild(row.cloneNode(true));
+    list.scrollTop = list.scrollHeight;
+  });
+}
+
+document.querySelectorAll(".chat-form").forEach((form) => form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const input = form.querySelector(".chat-input");
+  const message = input?.value.trim();
+  if (!message) return;
+  try {
+    await sendChatMessage(message);
+    appendChatMessage(message, true);
+    input.value = "";
+  } catch (err) {
+    showToast(`Couldn't send message: ${err}`, "error");
+  }
+}));
+
+document.querySelectorAll(".chat-file-button").forEach((button) => button.addEventListener("click", () => {
+  button.closest(".chat-panel, .host-chat-block")?.querySelector(".chat-file-input")?.click();
+}));
+document.querySelectorAll(".chat-file-input").forEach((input) => input.addEventListener("change", async (event) => {
+  const fileInput = event.currentTarget;
+  const file = fileInput.files?.[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) {
+    showToast("Choose a file smaller than 2 MB.", "warning");
+    fileInput.value = "";
+    return;
+  }
+  const id = crypto.randomUUID();
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const parts = [];
+  for (let offset = 0; offset < bytes.length; offset += 1800) {
+    const slice = bytes.subarray(offset, Math.min(offset + 1800, bytes.length));
+    let binary = "";
+    for (const byte of slice) binary += String.fromCharCode(byte);
+    parts.push(btoa(binary));
+  }
+  const total = Math.max(1, parts.length);
+  try {
+    await sendChatMessage(`CXFILEMETA|${id}|${encodeURIComponent(file.name)}|${encodeURIComponent(file.type || "application/octet-stream")}|${file.size}`);
+    for (let index = 0; index < total; index++) {
+      await sendChatMessage(`CXFILE|${id}|${index}|${total}|${parts[index] || ""}`);
+    }
+    appendChatMessage(`Sent file: ${file.name}`, true);
+  } catch (err) {
+    showToast(`File transfer stopped: ${err}`, "error");
+  } finally {
+    fileInput.value = "";
+  }
+}));
+
 $("btn-disconnect")?.addEventListener("click", async () => {
   await stopCapture().catch(() => {});
+  clearTimeout(state.connectionTimer);
+  state.connectionTimer = null;
   state.connected = false;
   setGlobalStatus("Ready");
   showScreen("home");
@@ -348,3 +606,10 @@ renderRecentChips();
 setGlobalStatus("Ready");
 showScreen("home");
 loadIdentity();
+listDisplays().then((displays) => {
+  const select = $("stream-display");
+  if (!select || !displays?.length) return;
+  select.innerHTML = displays.map((display) =>
+    `<option value="${display.index}">Display ${display.index + 1} · ${display.width} × ${display.height}</option>`
+  ).join("");
+}).catch((err) => showToast(`Couldn't list displays: ${err}`, "warning", 4000));

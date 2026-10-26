@@ -16,17 +16,23 @@
 use anyhow::Result;
 use log::info;
 
-/// Apply screen-capture exclusion stealth to the application window.
-pub fn apply_stealth() -> Result<()> {
-    info!("[stealth] Applying screen-capture exclusion");
+/// Enable or disable screen-capture exclusion for the Connex window.
+pub fn set_stealth(enabled: bool) -> Result<()> {
+    info!("[stealth] Screen-capture exclusion enabled={enabled}");
 
     #[cfg(target_os = "macos")]
-    macos::apply()?;
+    macos::set_enabled(enabled)?;
 
     #[cfg(target_os = "windows")]
-    windows::apply()?;
+    anyhow::bail!("A Connex window handle is required to change capture exclusion on Windows");
 
     Ok(())
+}
+
+/// Compatibility helper for non-Windows platform checks.
+#[cfg(not(target_os = "windows"))]
+pub fn apply_stealth() -> Result<()> {
+    set_stealth(true)
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -39,7 +45,7 @@ mod macos {
     use objc2::msg_send;
     use objc2::runtime::{AnyClass, AnyObject};
 
-    pub fn apply() -> Result<()> {
+    pub fn set_enabled(enabled: bool) -> Result<()> {
         unsafe {
             let ns_app_class = match AnyClass::get("NSApplication") {
                 Some(cls) => cls,
@@ -62,13 +68,14 @@ mod macos {
                 for i in 0..count {
                     let win: *mut AnyObject = msg_send![windows, objectAtIndex: i];
                     if !win.is_null() {
-                        let _: () = msg_send![win, setSharingType: 0usize];
+                        let sharing_type = if enabled { 0usize } else { 2usize };
+                        let _: () = msg_send![win, setSharingType: sharing_type];
                     }
                 }
             }
         }
 
-        info!("[stealth:macos] NSWindowSharingNone applied — window is hidden from screen sharing");
+        info!("[stealth:macos] Capture sharing type updated: enabled={enabled}");
         Ok(())
     }
 }
@@ -82,23 +89,32 @@ mod windows {
     use log::info;
     use windows::Win32::Foundation::HWND;
     use windows::Win32::UI::WindowsAndMessaging::{
-        GetForegroundWindow, SetWindowDisplayAffinity, WDA_EXCLUDEFROMCAPTURE,
+        SetWindowDisplayAffinity, WDA_EXCLUDEFROMCAPTURE, WDA_NONE,
     };
 
-    pub fn apply() -> Result<()> {
+    pub fn set_window(hwnd: HWND, enabled: bool) -> Result<()> {
         unsafe {
-            let hwnd: HWND = GetForegroundWindow();
-            if !hwnd.0.is_null() {
-                // WDA_EXCLUDEFROMCAPTURE = 0x00000011
-                let _ = SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE);
-                info!("[stealth:windows] WDA_EXCLUDEFROMCAPTURE set on active window");
-            }
+            let affinity = if enabled {
+                WDA_EXCLUDEFROMCAPTURE
+            } else {
+                WDA_NONE
+            };
+            SetWindowDisplayAffinity(hwnd, affinity)?;
         }
+        info!("[stealth:windows] Capture exclusion enabled={enabled}");
         Ok(())
     }
 }
 
-#[cfg(test)]
+#[cfg(target_os = "windows")]
+pub fn set_stealth_for_window(
+    hwnd: windows::Win32::Foundation::HWND,
+    enabled: bool,
+) -> Result<()> {
+    windows::set_window(hwnd, enabled)
+}
+
+#[cfg(all(test, not(target_os = "windows")))]
 mod tests {
     use super::*;
 
