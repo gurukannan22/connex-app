@@ -21,9 +21,12 @@ use webrtc::peer_connection::configuration::RTCConfiguration;
 use webrtc::peer_connection::peer_connection_state::RTCPeerConnectionState;
 use webrtc::peer_connection::RTCPeerConnection;
 
-/// Google's free public STUN server
+/// Free public STUN servers for NAT traversal
 const STUN_SERVERS: &[&str] = &[
     "stun:stun.l.google.com:19302",
+    "stun:stun1.l.google.com:19302",
+    "stun:stun2.l.google.com:19302",
+    "stun:stun.cloudflare.com:3478",
 ];
 
 /// Channel labels
@@ -44,13 +47,25 @@ pub async fn create_peer_connection() -> Result<Arc<RTCPeerConnection>> {
         .with_interceptor_registry(registry)
         .build();
 
-    let ice_servers: Vec<RTCIceServer> = STUN_SERVERS
+    let mut ice_servers: Vec<RTCIceServer> = STUN_SERVERS
         .iter()
         .map(|url| RTCIceServer {
             urls: vec![url.to_string()],
             ..Default::default()
         })
         .collect();
+
+    // Add free public TURN relay for cross-network NAT traversal (bypasses CGNAT & restrictive firewalls)
+    ice_servers.push(RTCIceServer {
+        urls: vec![
+            "turn:openrelay.metered.ca:80".to_string(),
+            "turn:openrelay.metered.ca:443".to_string(),
+            "turn:openrelay.metered.ca:443?transport=tcp".to_string(),
+        ],
+        username: "openrelayproject".to_string(),
+        credential: "openrelayproject".to_string(),
+        ..Default::default()
+    });
 
     let config = RTCConfiguration {
         ice_servers,

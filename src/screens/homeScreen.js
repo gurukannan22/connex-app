@@ -112,7 +112,7 @@ export function renderHomeScreen() {
                   <textarea class="input input-mono" id="ctrl-answer-box" rows="3" readonly></textarea>
                   <button class="btn btn-ghost btn-sm" id="btn-ctrl-copy-answer">${icon("copy", "icon icon-sm")} Copy reply</button>
                 </div>
-                <span class="flow-status is-waiting"><span class="dot"></span>Waiting for them to accept…</span>
+                <span class="flow-status is-waiting" id="ctrl-status"><span class="dot"></span>Waiting for them to accept…</span>
                 <button class="btn btn-danger btn-sm" id="btn-ctrl-cancel" type="button">Cancel connection</button>
               </div>
 

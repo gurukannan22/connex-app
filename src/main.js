@@ -282,7 +282,7 @@ $("btn-host-apply-answer")?.addEventListener("click", async () => {
   } catch (err) {
     setShareStep(3, "");
     $("share-status").className = "flow-status is-error";
-    $("share-status").innerHTML = `<span class="dot"></span>Reply rejected — check the passcode`;
+    $("share-status").innerHTML = `<span class="dot"></span>${err || "Reply rejected — check the passcode"}`;
     showToast(`${err}`, "error");
     btn.disabled = false;
     return;
@@ -292,10 +292,10 @@ $("btn-host-apply-answer")?.addEventListener("click", async () => {
     await startCapture(Number($("stream-quality")?.value || 75), Number($("stream-display")?.value || 0));
     setShareStep(2, "done");
     setShareStep(3, "done");
-    $("share-status").className = "flow-status is-online";
-    $("share-status").innerHTML = `<span class="dot"></span>Sharing active`;
-    setGlobalStatus("Sharing active", "is-online");
-    showToast("Connection accepted — your screen is being shared.", "success");
+    $("share-status").className = "flow-status is-waiting";
+    $("share-status").innerHTML = `<span class="dot"></span>Connecting to peer…`;
+    setGlobalStatus("Connecting…", "is-waiting");
+    showToast("Reply accepted — connecting to peer…", "info");
   } catch (err) {
     setShareStep(3, "");
     $("share-status").className = "flow-status is-error";
@@ -355,12 +355,20 @@ $("btn-controller-connect")?.addEventListener("click", async () => {
       saveRecent(deviceId);
       renderRecentChips();
     }
+    if ($("ctrl-status")) {
+      $("ctrl-status").className = "flow-status is-waiting";
+      $("ctrl-status").innerHTML = `<span class="dot"></span>Waiting for them to accept…`;
+    }
     setGlobalStatus("Waiting for host", "is-waiting");
     btn.innerHTML = `${icon("check", "icon icon-sm")} Reply ready`;
     clearTimeout(state.connectionTimer);
     state.connectionTimer = setTimeout(() => {
       if (!state.connected) {
         setGlobalStatus("No screen yet", "is-waiting");
+        if ($("ctrl-status")) {
+          $("ctrl-status").className = "flow-status is-error";
+          $("ctrl-status").innerHTML = `<span class="dot"></span>No response from host`;
+        }
         showToast("No screen has arrived yet. Check that the host accepted your reply, or cancel and try again.", "warning", 6000);
       }
     }, 45_000);
@@ -384,6 +392,10 @@ $("btn-ctrl-cancel")?.addEventListener("click", async () => {
   state.connectionTimer = null;
   state.connected = false;
   $("ctrl-answer-box").value = "";
+  if ($("ctrl-status")) {
+    $("ctrl-status").className = "flow-status is-waiting";
+    $("ctrl-status").innerHTML = `<span class="dot"></span>Waiting for them to accept…`;
+  }
   $("connect-collapse").classList.remove("open");
   $("btn-controller-connect").innerHTML = `Connect ${icon("arrowRight", "icon icon-sm")}`;
   validateConnectForm();
@@ -508,11 +520,28 @@ function finishIncomingFile(id, transfer) {
 listen("connex://connection-state", (event) => {
   const connectionState = String(event.payload ?? "");
   if (connectionState === "connected") {
-    setGlobalStatus("Connected", "is-online");
+    if (state.sharing) {
+      if ($("share-status")) {
+        $("share-status").className = "flow-status is-online";
+        $("share-status").innerHTML = `<span class="dot"></span>Sharing active`;
+      }
+      setGlobalStatus("Sharing active", "is-online");
+      showToast("Connected to partner — screen sharing is active.", "success");
+    } else {
+      setGlobalStatus("Connected", "is-online");
+    }
   } else if (connectionState === "disconnected") {
     setGlobalStatus("Reconnecting…", "is-waiting");
   } else if (connectionState === "failed") {
     setGlobalStatus("Connection lost", "is-error");
+    if (state.sharing && $("share-status")) {
+      $("share-status").className = "flow-status is-error";
+      $("share-status").innerHTML = `<span class="dot"></span>Connection failed — check network`;
+    }
+    if ($("ctrl-status")) {
+      $("ctrl-status").className = "flow-status is-error";
+      $("ctrl-status").innerHTML = `<span class="dot"></span>Connection failed — restart session`;
+    }
     showToast("The peer connection failed. Check both networks and reconnect using a fresh payload.", "error", 6500);
   }
 });
@@ -538,7 +567,11 @@ document.querySelectorAll(".chat-form").forEach((form) => form.addEventListener(
     appendChatMessage(message, true);
     input.value = "";
   } catch (err) {
-    showToast(`Couldn't send message: ${err}`, "error");
+    if (String(err).includes("DataChannel is not opened")) {
+      showToast("Peer connection is still establishing. Wait a few seconds for data channel to open.", "warning");
+    } else {
+      showToast(`Couldn't send message: ${err}`, "error");
+    }
   }
 }));
 
