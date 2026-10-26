@@ -20,13 +20,18 @@ use log::info;
 pub fn set_stealth(enabled: bool) -> Result<()> {
     info!("[stealth] Screen-capture exclusion enabled={enabled}");
 
-    #[cfg(target_os = "macos")]
-    macos::set_enabled(enabled)?;
-
     #[cfg(target_os = "windows")]
-    anyhow::bail!("A Connex window handle is required to change capture exclusion on Windows");
+    {
+        anyhow::bail!("A Connex window handle is required to change capture exclusion on Windows");
+    }
 
-    Ok(())
+    #[cfg(not(target_os = "windows"))]
+    {
+        #[cfg(target_os = "macos")]
+        macos::set_enabled(enabled)?;
+
+        Ok(())
+    }
 }
 
 /// Compatibility helper for non-Windows platform checks.
@@ -84,7 +89,7 @@ mod macos {
 // Windows implementation
 // ─────────────────────────────────────────────────────────────
 #[cfg(target_os = "windows")]
-mod windows {
+mod windows_api {
     use anyhow::Result;
     use log::info;
     use windows::Win32::Foundation::HWND;
@@ -108,10 +113,10 @@ mod windows {
 
 #[cfg(target_os = "windows")]
 pub fn set_stealth_for_window(
-    hwnd: windows::Win32::Foundation::HWND,
+    hwnd: ::windows::Win32::Foundation::HWND,
     enabled: bool,
 ) -> Result<()> {
-    windows::set_window(hwnd, enabled)
+    windows_api::set_window(hwnd, enabled)
 }
 
 #[cfg(all(test, not(target_os = "windows")))]
@@ -122,7 +127,10 @@ mod tests {
     fn test_apply_stealth_does_not_panic() {
         // In a headless CLI test environment, applying window stealth should safely complete
         let res = apply_stealth();
-        assert!(res.is_ok(), "apply_stealth should not return error or panic");
+        assert!(
+            res.is_ok(),
+            "apply_stealth should not return error or panic"
+        );
     }
 
     #[test]
@@ -139,9 +147,7 @@ mod tests {
         // Calling apply_stealth concurrently across multiple threads should be thread-safe
         let mut handles = Vec::new();
         for _ in 0..4 {
-            handles.push(std::thread::spawn(|| {
-                apply_stealth()
-            }));
+            handles.push(std::thread::spawn(|| apply_stealth()));
         }
 
         for handle in handles {
